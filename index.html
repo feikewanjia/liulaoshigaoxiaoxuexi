@@ -1,0 +1,2654 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#2F6BFF">
+<title>作业工作台 · 托管学生作业管理</title>
+<link rel="stylesheet" href="https://miaoda.feishu.cn/fonts/css2?family=Noto+Sans+SC:wght@400;500;600;700;800&display=swap">
+<style>
+/* ============================================================
+   设计体系
+   ============================================================ */
+:root{
+  --bg:#F3F6FC;
+  --surface:#FFFFFF;
+  --surface-2:#EAF1FF;
+  --surface-3:#F7F9FE;
+  --ink:#1B2430;
+  --ink-2:#5A6572;
+  --ink-3:#8A94A3;
+  --line:#E3EAF5;
+  --primary:#2F6BFF;
+  --primary-strong:#1E55E0;
+  --primary-soft:#E9F0FF;
+  --accent:#FF8A3D;
+  --accent-soft:#FFF1E6;
+  --success:#18A05E;
+  --success-soft:#E5F7EE;
+  --warn:#E5A50A;
+  --warn-soft:#FDF3D9;
+  --danger:#E5484D;
+  --danger-soft:#FDEAEA;
+  --radius:16px;
+  --radius-s:12px;
+  --shadow:0 1px 2px rgba(16,32,60,.05),0 10px 28px rgba(16,32,60,.08);
+  --shadow-s:0 1px 2px rgba(16,32,60,.06);
+  --sidebar-w:232px;
+  --rail-w:76px;
+  --font:'Noto Sans SC',-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{
+  font-family:var(--font);
+  background:var(--bg);
+  color:var(--ink);
+  font-size:15px;
+  line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input,select,textarea{font-family:inherit;font-size:15px;color:var(--ink);border:1.5px solid var(--line);border-radius:var(--radius-s);padding:11px 13px;background:#fff;width:100%;outline:none;transition:border-color .18s,box-shadow .18s}
+input:focus,select:focus,textarea:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(47,107,255,.14)}
+textarea{resize:vertical;min-height:78px}
+label{font-size:13px;font-weight:600;color:var(--ink-2);display:block;margin-bottom:6px}
+::-webkit-scrollbar{width:9px;height:9px}
+::-webkit-scrollbar-thumb{background:#CBD6EA;border-radius:8px}
+::-webkit-scrollbar-track{background:transparent}
+
+/* ============ 布局 ============ */
+.layout{display:grid;grid-template-columns:var(--sidebar-w) 1fr;min-height:100vh}
+.main{min-width:0;padding:22px clamp(16px,4vw,40px) 40px;max-width:1180px}
+.page-title{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px;flex-wrap:wrap}
+.page-title h1{font-size:22px;font-weight:800;letter-spacing:.2px}
+.page-title .sub{font-size:13px;color:var(--ink-3);font-weight:500;margin-top:2px}
+.actions{display:flex;gap:10px;flex-wrap:wrap}
+
+/* ============ 侧边栏 ============ */
+.sidebar{
+  position:sticky;top:0;height:100vh;
+  background:linear-gradient(180deg,#ffffff,#f6f9ff);
+  border-right:1px solid var(--line);
+  padding:20px 14px 18px;
+  display:flex;flex-direction:column;
+}
+.brand{display:flex;align-items:center;gap:12px;padding:4px 8px 18px;border-bottom:1px solid var(--line);margin-bottom:14px}
+.brand-logo{width:54px;height:54px;border-radius:50%;flex:none;object-fit:cover;box-shadow:0 4px 12px rgba(47,107,255,.25);border:2px solid #fff}
+.brand-name{font-size:14.5px;font-weight:800;line-height:1.3;color:var(--ink);letter-spacing:.2px}
+.brand-name small{display:block;font-size:10.5px;font-weight:600;color:var(--primary);margin-top:2px;letter-spacing:1px}
+.mobile-brand{display:none;align-items:center;gap:10px;padding:12px 4px 4px}
+.mobile-brand img{width:36px;height:36px;border-radius:50%;box-shadow:0 2px 8px rgba(47,107,255,.2)}
+.mobile-brand b{font-size:14px;font-weight:800}
+.mobile-brand span{font-size:10.5px;color:var(--primary);font-weight:700;letter-spacing:.5px}
+.nav{display:flex;flex-direction:column;gap:2px;flex:1;overflow-y:auto}
+.nav-group{font-size:10.5px;font-weight:700;color:var(--ink-3);letter-spacing:1.2px;padding:16px 13px 5px;text-transform:uppercase}
+.nav-item{
+  display:flex;align-items:center;gap:12px;padding:10px 13px;border-radius:12px;
+  color:var(--ink-2);font-weight:600;font-size:14.5px;transition:background .15s,color .15s;text-align:left;width:100%;
+}
+.nav-item .nav-ic{
+  width:32px;height:32px;border-radius:9px;flex:none;display:flex;align-items:center;justify-content:center;
+  background:var(--surface-2);transition:all .18s;overflow:hidden;
+}
+.nav-item .nav-ic svg{width:18px;height:18px}
+.nav-item .nav-ic img{width:100%;height:100%;object-fit:cover;display:block;border-radius:inherit}
+.nav-item:hover{background:var(--surface-2);color:var(--primary)}
+.nav-item:hover .nav-ic{background:var(--primary-soft);color:var(--primary);transform:scale(1.06)}
+.nav-item.active{background:var(--primary);color:#fff;box-shadow:0 6px 14px rgba(47,107,255,.3)}
+.nav-item.active .nav-ic{background:rgba(255,255,255,.22);color:#fff}
+.sidebar-foot{display:flex;flex-direction:column;gap:4px;border-top:1px solid var(--line);padding-top:12px;margin-top:12px}
+.sidebar-foot .nav-item{font-size:13px}
+
+/* ============ 底部导航（移动端） ============ */
+.bottom-nav{display:none}
+
+/* ============ 卡片 ============ */
+.card{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px;border:1px solid rgba(227,234,245,.7)}
+.card + .card{margin-top:16px}
+.card-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px}
+.card-head h3{font-size:15.5px;font-weight:700}
+.card-head .hint{font-size:12.5px;color:var(--ink-3)}
+
+/* ============ 统计卡片 ============ */
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}
+.stat{
+  background:var(--surface);border-radius:var(--radius);padding:16px 16px 14px;
+  box-shadow:var(--shadow);border:1px solid rgba(227,234,245,.7);position:relative;overflow:hidden;
+}
+.stat .num{font-size:30px;font-weight:800;letter-spacing:.3px}
+.stat .lbl{font-size:12.5px;color:var(--ink-2);font-weight:600;margin-top:2px}
+.stat .ic{position:absolute;right:12px;top:12px;width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;color:#fff}
+.stat .ic svg{width:20px;height:20px}
+.ic-blue{background:linear-gradient(135deg,#3D78FF,#5C8CFF)}
+.ic-green{background:linear-gradient(135deg,#20B571,#38D08B)}
+.ic-orange{background:linear-gradient(135deg,#FF9445,#FFB26B)}
+.ic-purple{background:linear-gradient(135deg,#7C5CF0,#9A80F5)}
+
+/* ============ 学生卡片 ============ */
+.student-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(248px,1fr));gap:14px}
+.student-card{
+  background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);
+  border:1px solid rgba(227,234,245,.7);padding:16px;cursor:pointer;
+  transition:transform .16s,box-shadow .16s;position:relative;
+}
+.student-card:hover{transform:translateY(-3px);box-shadow:0 14px 30px rgba(16,32,60,.12)}
+.student-top{display:flex;align-items:center;gap:12px}
+.avatar{
+  width:48px;height:48px;border-radius:14px;flex:none;color:#fff;
+  display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:800;
+}
+.student-meta{min-width:0}
+.student-meta .nm{font-weight:700;font-size:16px;display:flex;align-items:center;gap:6px}
+.student-meta .cls{font-size:12.5px;color:var(--ink-2)}
+.student-stat{display:flex;align-items:center;gap:14px;margin-top:14px}
+.ring-wrap{position:relative;width:64px;height:64px;flex:none}
+.ring-wrap .ring-txt{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.1}
+.ring-wrap .ring-txt b{font-size:15px;font-weight:800}
+.ring-wrap .ring-txt span{font-size:9.5px;color:var(--ink-3);font-weight:600}
+.student-bars{flex:1;display:flex;flex-direction:column;gap:7px}
+.mini-bar{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink-2)}
+.mini-bar .bar{flex:1;height:7px;border-radius:6px;background:var(--surface-2);overflow:hidden}
+.mini-bar .bar i{display:block;height:100%;border-radius:6px;background:var(--primary)}
+.mini-bar .bar i.green{background:var(--success)}
+.mini-bar .bar i.orange{background:var(--accent)}
+.student-foot{display:flex;align-items:center;gap:8px;margin-top:12px;padding-top:12px;border-top:1px dashed var(--line);font-size:12.5px;color:var(--ink-2)}
+.student-foot .tag{font-size:11.5px;font-weight:700;padding:3px 9px;border-radius:20px}
+.card-del{margin-left:auto;width:28px;height:28px;border-radius:8px;border:none;background:transparent;color:var(--ink-3);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;flex:none}
+.card-del svg{width:15px;height:15px}
+.card-del:hover{background:var(--danger-soft);color:var(--danger);transform:scale(1.1)}
+
+/* ============ 待办/作业列表 ============ */
+.todo-list{display:flex;flex-direction:column;gap:10px}
+.todo-item{
+  display:flex;align-items:center;gap:12px;background:var(--surface-3);
+  border:1px solid var(--line);border-radius:14px;padding:12px 14px;transition:background .15s,border-color .15s;
+}
+.todo-item.done{background:var(--success-soft);border-color:#c9ecdb}
+.check-btn{
+  width:46px;height:46px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;
+  border:2.5px solid #C7D3EA;color:#C7D3EA;background:#fff;transition:all .18s;
+}
+.check-btn svg{width:24px;height:24px}
+.check-btn:hover{border-color:var(--success);color:var(--success)}
+.todo-item.done .check-btn{border-color:var(--success);background:var(--success);color:#fff;animation:pop .3s ease}
+@keyframes pop{0%{transform:scale(.6)}60%{transform:scale(1.12)}100%{transform:scale(1)}}
+.todo-main{flex:1;min-width:0}
+.todo-main .tm{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.todo-main .ct{font-weight:600;font-size:14.5px;margin-top:2px;word-break:break-word}
+.todo-main .meta{font-size:12px;color:var(--ink-3);margin-top:2px;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.todo-ops{display:flex;align-items:center;gap:8px;flex:none}
+.icon-btn{
+  width:40px;height:40px;border-radius:11px;display:flex;align-items:center;justify-content:center;
+  background:var(--surface);border:1px solid var(--line);color:var(--ink-2);transition:all .15s;
+}
+.icon-btn svg{width:19px;height:19px}
+.icon-btn:hover{border-color:var(--primary);color:var(--primary);background:var(--primary-soft)}
+.photo-thumb{width:44px;height:44px;border-radius:10px;object-fit:cover;border:1px solid var(--line);cursor:zoom-in;flex:none}
+
+/* ============ 科目标签 ============ */
+.sub{font-size:11.5px;font-weight:700;padding:3px 10px;border-radius:20px;display:inline-flex;align-items:center;gap:5px}
+.sub .dot{width:6px;height:6px;border-radius:50%;background:currentColor}
+.sub-yuwen{background:#FDE8DE;color:#D9490B}
+.sub-shuxue{background:#E9F0FF;color:#1E55E0}
+.sub-yingyu{background:#E0F5EC;color:#0B8A56}
+.sub-kexue{background:#EFE9FD;color:#6B45D6}
+.sub-other{background:#EEF1F5;color:#5A6572}
+
+/* ============ 周报表格 ============ */
+.table-wrap{overflow-x:auto;border-radius:var(--radius);box-shadow:var(--shadow);border:1px solid rgba(227,234,245,.7);background:#fff}
+table{width:100%;border-collapse:collapse;font-size:13.5px;min-width:640px}
+th{background:var(--surface-2);color:var(--ink-2);font-weight:700;text-align:left;padding:12px 14px;white-space:nowrap}
+td{padding:12px 14px;border-top:1px solid var(--line);vertical-align:middle}
+tbody tr:hover{background:var(--surface-3)}
+.progress-cell{display:flex;align-items:center;gap:10px;min-width:150px}
+.progress-cell .bar{flex:1;height:8px;border-radius:6px;background:var(--surface-2);overflow:hidden}
+.progress-cell .bar i{display:block;height:100%;border-radius:6px;background:linear-gradient(90deg,#3D78FF,#5C8CFF)}
+.rate-badge{font-weight:800;font-size:14px;white-space:nowrap}
+
+/* ============ 报告 ============ */
+.report{max-width:820px;margin:0 auto}
+.report-head{
+  background:linear-gradient(135deg,#2F6BFF,#5C8CFF);color:#fff;border-radius:20px;padding:26px 26px 22px;
+  box-shadow:0 16px 34px rgba(47,107,255,.3);position:relative;overflow:hidden;
+}
+.report-head::after{content:"";position:absolute;right:-40px;top:-40px;width:190px;height:190px;border-radius:50%;background:rgba(255,255,255,.12)}
+.report-head::before{content:"";position:absolute;right:60px;bottom:-60px;width:150px;height:150px;border-radius:50%;background:rgba(255,255,255,.08)}
+.report-head .rh-top{display:flex;align-items:center;gap:14px;position:relative;z-index:1}
+.report-head h1{font-size:24px;font-weight:800;letter-spacing:.5px}
+.report-head .rh-sub{font-size:13px;opacity:.9;margin-top:4px}
+.grade-badge{margin-left:auto;text-align:center;background:rgba(255,255,255,.16);border:1.5px solid rgba(255,255,255,.45);border-radius:16px;padding:8px 18px;backdrop-filter:blur(4px)}
+.grade-badge b{display:block;font-size:34px;font-weight:800;line-height:1}
+.grade-badge span{font-size:11px;opacity:.9}
+.report-section{background:#fff;border-radius:18px;box-shadow:var(--shadow);border:1px solid rgba(227,234,245,.7);padding:20px;margin-top:16px}
+.report-section h3{font-size:15.5px;font-weight:700;display:flex;align-items:center;gap:9px;margin-bottom:14px}
+.report-section h3 .ico{width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;color:#fff;flex:none}
+.report-section h3 .ico svg{width:16px;height:16px}
+.kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.kv-item{background:var(--surface-3);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.kv-item .k{font-size:12px;color:var(--ink-3);font-weight:600}
+.kv-item .v{font-size:19px;font-weight:800;margin-top:2px}
+.subject-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px dashed var(--line)}
+.subject-row:last-child{border-bottom:none}
+.subject-row .sub{width:64px;justify-content:center}
+.subject-row .bar{flex:1;height:10px;border-radius:6px;background:var(--surface-2);overflow:hidden}
+.subject-row .bar i{display:block;height:100%;border-radius:6px}
+.subject-row .val{width:86px;text-align:right;font-size:12.5px;color:var(--ink-2);font-weight:600}
+.point-tag{display:inline-flex;align-items:center;gap:6px;background:var(--surface-3);border:1px solid var(--line);border-radius:20px;padding:5px 12px;font-size:12.5px;margin:4px 6px 0 0}
+.mastery-dots{display:inline-flex;gap:3px}
+.mastery-dots svg{width:15px;height:15px}
+.advice{display:flex;gap:12px;padding:12px;background:var(--surface-3);border-radius:12px;border-left:4px solid var(--accent);margin-top:10px}
+.advice svg{width:20px;height:20px;color:var(--accent);flex:none;margin-top:2px}
+.report-tools{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+.btn{display:inline-flex;align-items:center;gap:8px;font-weight:700;font-size:14px;padding:11px 18px;border-radius:12px;transition:all .15s;justify-content:center}
+.btn svg{width:18px;height:18px}
+.btn-primary{background:var(--primary);color:#fff;box-shadow:0 6px 16px rgba(47,107,255,.3)}
+.btn-primary:hover{background:var(--primary-strong)}
+.btn-ghost{background:#fff;color:var(--ink);border:1.5px solid var(--line)}
+.btn-ghost:hover{border-color:var(--primary);color:var(--primary)}
+.btn-green{background:var(--success);color:#fff;box-shadow:0 6px 16px rgba(24,160,94,.28)}
+.btn-green:hover{background:#148a51}
+.btn-danger{background:var(--danger-soft);color:var(--danger);border:1.5px solid #f5c6c7}
+.btn-sm{padding:8px 13px;font-size:13px;border-radius:10px}
+.btn-block{width:100%}
+
+/* ============ 空状态 ============ */
+.empty{text-align:center;padding:44px 20px;color:var(--ink-3)}
+.empty svg{width:64px;height:64px;color:#C7D3EA;margin-bottom:12px}
+.empty b{display:block;font-size:15px;color:var(--ink-2);margin-bottom:4px}
+.empty p{font-size:13px;max-width:340px;margin:0 auto}
+
+/* ============ 弹窗 ============ */
+.modal-mask{position:fixed;inset:0;background:rgba(20,32,58,.45);display:none;align-items:flex-end;justify-content:center;z-index:100;backdrop-filter:blur(3px)}
+.modal-mask.open{display:flex}
+.modal{
+  background:#fff;width:100%;max-width:520px;max-height:92vh;overflow-y:auto;
+  border-radius:20px 20px 0 0;padding:22px 20px 20px;animation:slideUp .26s ease;
+}
+@keyframes slideUp{from{transform:translateY(40px);opacity:0}to{transform:translateY(0);opacity:1}}
+@media(min-width:560px){
+  .modal-mask{align-items:center}
+  .modal{border-radius:20px;box-shadow:var(--shadow)}
+}
+.modal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.modal-head h3{font-size:17px;font-weight:800}
+.modal-close{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:var(--surface-3);color:var(--ink-2)}
+.modal-close svg{width:18px;height:18px}
+.form-row{margin-bottom:14px}
+.form-row .inline{display:flex;gap:10px}
+.form-row .inline>*{flex:1}
+.hint-line{font-size:12px;color:var(--ink-3);margin-top:6px}
+
+/* ============ 星星评分 ============ */
+.star-input{display:inline-flex;gap:4px;padding:8px 0}
+.star-input button{padding:2px;color:#D8E0EF}
+.star-input button.on{color:#F5B301}
+.star-input svg{width:26px;height:26px}
+.mastery-pick{display:flex;gap:8px;flex-wrap:wrap}
+.mastery-pick button{border:1.5px solid var(--line);border-radius:20px;padding:7px 14px;font-size:13px;font-weight:600;color:var(--ink-2);background:#fff}
+.mastery-pick button.on{border-color:var(--primary);background:var(--primary-soft);color:var(--primary)}
+
+/* ============ Toast ============ */
+#toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);background:rgba(24,32,48,.94);color:#fff;padding:12px 20px;border-radius:12px;font-size:14px;font-weight:600;opacity:0;pointer-events:none;transition:all .3s;z-index:200;max-width:86vw;text-align:center;box-shadow:0 10px 26px rgba(0,0,0,.25)}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ============ 家长视角 ============ */
+.parent-shell{max-width:720px;margin:0 auto}
+.parent-hero{background:linear-gradient(135deg,#2F6BFF,#5C8CFF);color:#fff;border-radius:20px;padding:26px;box-shadow:0 16px 34px rgba(47,107,255,.28);position:relative;overflow:hidden}
+.parent-hero::after{content:"";position:absolute;right:-46px;top:-46px;width:200px;height:200px;border-radius:50%;background:rgba(255,255,255,.12)}
+.parent-hero h1{font-size:22px;font-weight:800;display:flex;align-items:center;gap:12px;position:relative;z-index:1}
+.parent-hero p{font-size:13px;opacity:.92;margin-top:6px;position:relative;z-index:1}
+.parent-hero .ph-stats{display:flex;gap:22px;margin-top:18px;position:relative;z-index:1}
+.parent-hero .phs b{font-size:24px;font-weight:800;display:block}
+.parent-hero .phs span{font-size:12px;opacity:.9}
+
+/* ============ 响应式：平板 ============ */
+@media(max-width:1023px){
+  .layout{grid-template-columns:var(--rail-w) 1fr}
+  .sidebar{padding:16px 9px}
+  .brand{padding:2px 0 16px;justify-content:center;border-bottom:none;margin-bottom:8px}
+  .brand-logo{width:42px;height:42px}
+  .brand-name{display:none}
+  .nav-group{display:none}
+  .nav-item{justify-content:center;padding:10px 6px}
+  .nav-item span{display:none}
+  .nav-item .nav-ic{width:38px;height:38px;border-radius:11px}
+  .nav-item .nav-ic svg{width:20px;height:20px}
+}
+/* ============ 响应式：手机 ============ */
+@media(max-width:768px){
+  .layout{display:block}
+  .sidebar{display:none}
+  .mobile-brand{display:flex}
+  .bottom-nav{
+    display:flex;position:fixed;left:0;right:0;bottom:0;z-index:60;
+    background:rgba(255,255,255,.96);backdrop-filter:blur(10px);
+    border-top:1px solid var(--line);padding:6px 4px calc(8px + env(safe-area-inset-bottom));
+    justify-content:space-around;
+  }
+  .bottom-nav .nav-item{flex-direction:column;gap:3px;font-size:10.5px;padding:6px 10px;border-radius:12px;width:auto}
+  .bottom-nav .nav-item svg{width:22px;height:22px}
+  .bottom-nav .nav-item img{width:26px;height:26px;object-fit:contain;border-radius:7px}
+  .main{padding:16px 14px 96px}
+  .page-title h1{font-size:19px}
+  .stat-grid{grid-template-columns:repeat(2,1fr);gap:10px}
+  .stat .num{font-size:25px}
+  .student-grid{grid-template-columns:1fr}
+  .todo-item{flex-wrap:wrap}
+  .todo-ops{width:100%;justify-content:flex-end;padding-top:8px;border-top:1px dashed var(--line)}
+  .modal{padding:20px 16px}
+  .report-head{padding:22px 18px}
+  .report-head h1{font-size:20px}
+  .grade-badge{padding:6px 12px}
+  .grade-badge b{font-size:26px}
+  .kv{grid-template-columns:repeat(2,1fr)}
+  .subject-row .val{width:70px}
+  .table-wrap{min-width:0}
+}
+/* ============ 作业分析视图 ============ */
+.analysis-picker{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;align-items:center}
+.analysis-picker select{max-width:260px}
+.analysis-hero{
+  background:linear-gradient(135deg,#2F6BFF,#5C8CFF);color:#fff;border-radius:20px;padding:24px;
+  box-shadow:0 14px 30px rgba(47,107,255,.28);position:relative;overflow:hidden;margin-bottom:16px;
+}
+.analysis-hero::after{content:"";position:absolute;right:-50px;top:-50px;width:220px;height:220px;border-radius:50%;background:rgba(255,255,255,.12)}
+.analysis-hero .ah-top{display:flex;align-items:center;gap:14px;position:relative;z-index:1;flex-wrap:wrap}
+.analysis-hero h2{font-size:20px;font-weight:800}
+.analysis-hero .ah-sub{font-size:12.5px;opacity:.9;margin-top:3px}
+.analysis-hero .score-big{margin-left:auto;text-align:center;background:rgba(255,255,255,.16);border:1.5px solid rgba(255,255,255,.4);border-radius:16px;padding:10px 22px;backdrop-filter:blur(4px)}
+.analysis-hero .score-big b{display:block;font-size:36px;font-weight:800;line-height:1}
+.analysis-hero .score-big span{font-size:11px;opacity:.9}
+.ah-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:18px;position:relative;z-index:1}
+.ah-kpi{background:rgba(255,255,255,.14);border-radius:12px;padding:10px 12px;backdrop-filter:blur(3px)}
+.ah-kpi b{display:block;font-size:20px;font-weight:800}
+.ah-kpi span{font-size:11px;opacity:.88}
+.knowledge-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
+.knowledge-card{background:var(--surface-3);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.knowledge-card .kn{font-weight:700;font-size:14px;display:flex;align-items:center;justify-content:space-between}
+.knowledge-card .kn .cnt{font-size:11px;color:var(--ink-3);font-weight:600}
+.knowledge-card .lvl{font-size:12px;margin-top:4px;font-weight:600}
+.knowledge-card .lvl.good{color:var(--success)}
+.knowledge-card .lvl.mid{color:var(--accent)}
+.knowledge-card .lvl.bad{color:var(--danger)}
+.weak-alert{display:flex;gap:12px;padding:14px;background:var(--danger-soft);border-radius:14px;border-left:4px solid var(--danger);margin-top:10px}
+.weak-alert svg{width:22px;height:22px;color:var(--danger);flex:none;margin-top:1px}
+.weak-alert b{color:var(--danger)}
+@media(max-width:768px){
+  .ah-kpis{grid-template-columns:repeat(2,1fr)}
+  .analysis-hero .score-big{margin-left:0}
+  .analysis-hero h2{font-size:17px}
+}
+/* ============ 打印 ============ */
+@media print{
+  .sidebar,.bottom-nav,.no-print,.modal-mask,#toast{display:none!important}
+  body{background:#fff}
+  .layout{display:block}
+  .main{padding:0;max-width:none}
+  .card,.report-section{box-shadow:none;border:1px solid #ddd}
+  .report-head{box-shadow:none;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important}
+}
+/* ============ 知识点热力图 ============ */
+.heatmap-wrap{padding:4px 0}
+.heatmap-legend{display:flex;align-items:center;gap:14px;font-size:12px;color:var(--ink-2);margin-bottom:12px;flex-wrap:wrap}
+.heatmap-legend .lg{display:flex;align-items:center;gap:5px}
+.heatmap-legend .sw{width:14px;height:14px;border-radius:4px}
+.heatmap-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px}
+.heat-cell{border-radius:12px;padding:12px;text-align:center;transition:transform .15s,box-shadow .15s;cursor:default;border:1px solid transparent}
+.heat-cell:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(0,0,0,.08)}
+.heat-cell .hn{font-weight:700;font-size:13.5px;margin-bottom:4px;word-break:break-all}
+.heat-cell .hv{font-size:11.5px;opacity:.85}
+.heat-cell .hc{font-size:11px;opacity:.7;margin-top:2px}
+.heat-strong{background:linear-gradient(135deg,#20B571,#38D08B);color:#fff}
+.heat-good{background:linear-gradient(135deg,#51CF66,#8CE99A);color:#fff}
+.heat-mid{background:linear-gradient(135deg,#FFD43B,#FFE066);color:#7A5B00}
+.heat-weak{background:linear-gradient(135deg,#FF922B,#FFB26B);color:#fff}
+.heat-bad{background:linear-gradient(135deg,#FA5252,#FF8787);color:#fff}
+.heat-none{background:var(--surface-2);color:var(--ink-3);border-color:var(--line)}
+/* ============ 错题本 ============ */
+.mistake-filter{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;align-items:center}
+.mistake-filter select{padding:8px 12px;border-radius:10px;border:1.5px solid var(--line);font-size:13.5px;background:#fff;color:var(--ink-1);font-weight:600}
+.mistake-item{display:flex;gap:12px;padding:14px;border-radius:14px;border:1.5px solid var(--line);background:#fff;margin-bottom:10px;transition:border-color .15s}
+.mistake-item:hover{border-color:var(--primary)}
+.mistake-item.reviewed{opacity:.65;background:var(--surface-2)}
+.mistake-item .mi-left{flex:none;width:42px;height:42px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;font-size:16px}
+.mistake-item .mi-main{flex:1;min-width:0}
+.mistake-item .mi-title{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px}
+.mistake-item .mi-content{font-size:13.5px;color:var(--ink-1);margin-bottom:4px}
+.mistake-item .mi-meta{font-size:12px;color:var(--ink-3);display:flex;gap:10px;flex-wrap:wrap}
+.mistake-item .mi-ops{display:flex;gap:6px;flex:none;align-items:flex-start}
+.mistake-stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:16px}
+.mistake-stat{background:#fff;border-radius:14px;padding:16px;text-align:center;border:1.5px solid var(--line)}
+.mistake-stat b{display:block;font-size:26px;font-weight:800}
+.mistake-stat span{font-size:12.5px;color:var(--ink-3)}
+/* ============ 每日反馈 / 成长简报 ============ */
+.feedback-text{width:100%;min-height:220px;padding:14px;border-radius:12px;border:1.5px solid var(--line);font-size:13.5px;line-height:1.8;font-family:inherit;resize:vertical;background:var(--surface-3);color:var(--ink-1)}
+.feedback-actions{display:flex;gap:10px;margin-top:14px}
+.briefing-hero{background:linear-gradient(135deg,var(--primary),#5C7CFA);color:#fff;border-radius:18px;padding:24px;margin-bottom:18px}
+.briefing-hero h2{font-size:20px;margin-bottom:4px}
+.briefing-hero p{opacity:.9;font-size:13.5px}
+.briefing-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;margin-top:16px}
+.briefing-stats .bs{background:rgba(255,255,255,.18);border-radius:12px;padding:12px;text-align:center}
+.briefing-stats .bs b{display:block;font-size:20px;font-weight:800}
+.briefing-stats .bs span{font-size:11.5px;opacity:.9}
+.briefing-section{background:#fff;border-radius:14px;padding:18px;margin-bottom:14px;border:1.5px solid var(--line)}
+.briefing-section h3{font-size:15px;font-weight:800;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.growth-item{display:flex;gap:10px;padding:10px 0;border-bottom:1px dashed var(--line)}
+.growth-item:last-child{border-bottom:none}
+.growth-item .gi-ic{flex:none;width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px}
+/* ============ 错误标记 ============ */
+.wrong-badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;color:var(--danger);background:var(--danger-soft);padding:2px 8px;border-radius:20px}
+.wrong-btn{color:var(--ink-3)}
+.wrong-btn.active{color:var(--danger);background:var(--danger-soft)}
+.todo-item.wrong-mark{border-color:var(--danger);background:linear-gradient(90deg,#FFF5F5 0%,#fff 40%)}
+/* ============ 内容创作 ============ */
+.content-picker{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;align-items:center}
+.content-picker select{padding:9px 14px;border-radius:10px;border:1.5px solid var(--line);font-size:13.5px;background:#fff;color:var(--ink-1);font-weight:600}
+.content-card{background:#fff;border-radius:16px;padding:18px;margin-bottom:14px;border:1.5px solid var(--line);transition:box-shadow .15s,border-color .15s}
+.content-card:hover{box-shadow:0 8px 24px rgba(0,0,0,.08);border-color:var(--primary)}
+.content-card .cc-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.content-card .cc-tag{font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;background:var(--primary-soft);color:var(--primary)}
+.content-card .cc-title{font-size:15.5px;font-weight:800;margin-bottom:8px;line-height:1.5}
+.content-card .cc-body{font-size:13.5px;line-height:1.9;color:var(--ink-1);white-space:pre-wrap;margin-bottom:10px}
+.content-card .cc-meta{font-size:12px;color:var(--ink-3);margin-bottom:10px;display:flex;gap:12px;flex-wrap:wrap}
+.content-card .cc-actions{display:flex;gap:8px}
+.moments-preview{background:linear-gradient(135deg,#FFF9E6,#FFF);border-radius:14px;padding:16px;border:1px dashed #FFD43B;margin-bottom:12px}
+.moments-preview .mp-head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.moments-preview .mp-avatar{width:36px;height:36px;border-radius:50%;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px}
+.moments-preview .mp-name{font-weight:700;font-size:13.5px}
+.moments-preview .mp-time{font-size:11px;color:var(--ink-3)}
+.video-outline{background:var(--surface-3);border-radius:10px;padding:12px;margin:8px 0;font-size:13px;line-height:1.8}
+.video-outline b{color:var(--primary)}
+.gen-hero{background:linear-gradient(135deg,#7048E8,#9775FA);color:#fff;border-radius:18px;padding:22px;margin-bottom:18px}
+.gen-hero h2{font-size:19px;margin-bottom:4px}
+.gen-hero p{opacity:.9;font-size:13px}
+.gen-stats{display:flex;gap:16px;margin-top:14px;flex-wrap:wrap}
+.gen-stats .gs{background:rgba(255,255,255,.18);border-radius:12px;padding:10px 16px}
+.gen-stats .gs b{display:block;font-size:18px}
+.gen-stats .gs span{font-size:11.5px;opacity:.9}
+/* ============ 实时时钟 ============ */
+.live-clock{background:linear-gradient(135deg,#1A1A2E,#16213E);color:#fff;border-radius:12px;padding:8px 16px;text-align:center;min-width:110px;box-shadow:0 4px 12px rgba(26,26,46,.25);border:1px solid rgba(255,255,255,.1)}
+.live-clock .lc-time{font-size:20px;font-weight:800;letter-spacing:1.5px;font-variant-numeric:tabular-nums;line-height:1.2}
+.live-clock .lc-time .sec{font-size:13px;opacity:.7;margin-left:2px}
+.live-clock .lc-date{font-size:11px;opacity:.75;margin-top:2px;white-space:nowrap}
+@media (max-width:640px){
+  .live-clock{min-width:90px;padding:6px 12px}
+  .live-clock .lc-time{font-size:17px}
+  .live-clock .lc-date{font-size:10px}
+}
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     布局外壳
+     ============================================================ -->
+<div class="layout">
+  <!-- 侧边栏（电脑/平板） -->
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <img class="brand-logo" src="https://aka.doubaocdn.com/s/s9cpJrtjWf" alt="刘老师高效学习托管工作室">
+      <div class="brand-name">刘老师高效学习托管工作室<small>作业管理工作台</small></div>
+    </div>
+    <nav class="nav" id="desk-nav">
+      <div class="nav-group">工作台</div>
+      <button class="nav-item" data-route="home"><span class="nav-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg></span><span>今日总览</span></button>
+      <button class="nav-item" data-action="add-homework"><span class="nav-ic"><img src="https://aka.doubaocdn.com/s/4sympQlMRY" alt="登记作业"></span><span>登记作业</span></button>
+      <button class="nav-item" data-route="students"><span class="nav-ic"><img src="https://aka.doubaocdn.com/s/OgXm4ROIb0" alt="学生管理"></span><span>学生管理</span></button>
+      <button class="nav-item" data-action="add-student"><span class="nav-ic"><img src="https://aka.doubaocdn.com/s/MULPV9odnW" alt="添加学生"></span><span>添加学生</span></button>
+      <button class="nav-item" data-action="daily-feedback"><span class="nav-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg></span><span>每日反馈</span></button>
+      <button class="nav-item" data-route="mistakes"><span class="nav-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4.5A1.5 1.5 0 0 1 5.5 3H19a1 1 0 0 1 1 1v15.5a1 1 0 0 1-1 1H5.5A1.5 1.5 0 0 1 4 19z"/><path d="M4 19.5A1.5 1.5 0 0 1 5.5 18H20"/><path d="M9 8l6 6M15 8l-6 6"/></svg></span><span>错题本</span></button>
+      <div class="nav-group">数据分析</div>
+      <button class="nav-item" data-route="analysis"><span class="nav-ic"><img src="https://aka.doubaocdn.com/s/BVUFLHctPk" alt="作业分析"></span><span>作业分析</span></button>
+      <button class="nav-item" data-route="heatmap"><span class="nav-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></span><span>知识点热力图</span></button>
+      <button class="nav-item" data-route="ai-suggest"><span class="nav-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.6 4.4L18 9l-4.4 1.6L12 15l-1.6-4.4L6 9l4.4-1.6z"/><path d="M18.5 14l.9 2.1 2.1.9-2.1.9-.9 2.1-.9-2.1-2.1-.9 2.1-.9z"/></svg></span><span>AI智能建议</span></button>
+      <button class="nav-item" data-route="weekly"><span class="nav-ic"><img src="https://aka.doubaocdn.com/s/0edSNuJgjq" alt="周报统计"></span><span>周报统计</span></button>
+      <button class="nav-item" data-route="report"><span class="nav-ic"><img src="https://aka.doubaocdn.com/s/AGNWEs9kMA" alt="分析报告"></span><span>分析报告</span></button>
+      <button class="nav-item" data-action="parent-view"><span class="nav-ic"><img src="https://aka.doubaocdn.com/s/RMRXuEpkIL" alt="家长视角"></span><span>家长视角</span></button>
+      <button class="nav-item" data-route="briefing"><span class="nav-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l5-5 4 4 8-8"/><path d="M15 8h5v5"/><path d="M3 21h18"/></svg></span><span>每周成长简报</span></button>
+      <div class="nav-group">内容创作</div>
+      <button class="nav-item" data-route="moments"><span class="nav-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg></span><span>朋友圈文案</span></button>
+      <button class="nav-item" data-route="video-topics"><span class="nav-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2.5"/><path d="M10 9l5 3-5 3z"/><path d="M7 3v2M17 3v2"/></svg></span><span>短视频选题</span></button>
+      <div class="nav-group">系统</div>
+      <button class="nav-item" id="btn-export"><span class="nav-ic"><img src="https://aka.doubaocdn.com/s/bCiqvMXC0Q" alt="备份数据"></span><span>备份数据</span></button>
+      <button class="nav-item" id="btn-import"><span class="nav-ic"><img src="https://aka.doubaocdn.com/s/qYRL9p98DQ" alt="恢复数据"></span><span>恢复数据</span></button>
+    </nav>
+  </aside>
+
+  <!-- 主内容区 -->
+  <main class="main" id="main">
+    <div class="mobile-brand">
+      <img src="https://aka.doubaocdn.com/s/s9cpJrtjWf" alt="刘老师高效学习托管工作室">
+      <div><b>刘老师高效学习托管工作室</b><br><span>作业管理工作台</span></div>
+    </div>
+    <!-- 视图占位，由 JS 渲染 -->
+    <div id="view-root"></div>
+  </main>
+</div>
+
+<!-- 底部导航（手机） -->
+<nav class="bottom-nav" id="mobile-nav">
+  <button class="nav-item" data-route="home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg><span>总览</span></button>
+  <button class="nav-item" data-route="students"><img src="https://aka.doubaocdn.com/s/OgXm4ROIb0" alt="学生"><span>学生</span></button>
+  <button class="nav-item" data-route="analysis"><img src="https://aka.doubaocdn.com/s/BVUFLHctPk" alt="分析"><span>分析</span></button>
+  <button class="nav-item" data-route="weekly"><img src="https://aka.doubaocdn.com/s/0edSNuJgjq" alt="周报"><span>周报</span></button>
+  <button class="nav-item" data-route="report"><img src="https://aka.doubaocdn.com/s/AGNWEs9kMA" alt="报告"><span>报告</span></button>
+</nav>
+
+<!-- 弹窗 -->
+<div class="modal-mask" id="modal-mask">
+  <div class="modal" id="modal-box"></div>
+</div>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<!-- 隐藏文件输入 -->
+<input type="file" id="file-input" accept="image/*" style="display:none">
+<input type="file" id="json-input" accept=".json,application/json" style="display:none">
+
+<script>
+/* ============================================================
+   工具函数
+   ============================================================ */
+const $ = (sel, root) => (root || document).querySelector(sel);
+const $$ = (sel, root) => Array.from((root || document).querySelectorAll(sel));
+const pad = n => (n < 10 ? '0' + n : '' + n);
+const toKey = d => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+const todayKey = () => toKey(new Date());
+const uid = () => 'id' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function mondayOf(d){
+  const x = new Date(d); x.setHours(0,0,0,0);
+  const day = (x.getDay() + 6) % 7;
+  x.setDate(x.getDate() - day);
+  return x;
+}
+function weekEnd(start){ const e = new Date(start); e.setDate(e.getDate() + 6); return e; }
+function weekLabel(start){ return toKey(start) + ' ~ ' + toKey(weekEnd(start)); }
+function fmtShort(key){ const p = key.split('-'); return p[1] + '/' + p[2]; }
+function inWeek(key, start){
+  const k = toKey(new Date(key));
+  return k >= toKey(start) && k <= toKey(weekEnd(start));
+}
+
+/* ============================================================
+   SVG 图标库
+   ============================================================ */
+const IC = {
+  check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
+  plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
+  camera: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8.5h3l1.5-2.5h7L17 8.5h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13.5" r="3.2"/></svg>',
+  trash: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9.5 7V4.5h5V7M6.5 7l1 13h9l1-13"/><path d="M10 11v5M14 11v5"/></svg>',
+  edit: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20l.9-4.2L16.4 4.3a1.8 1.8 0 0 1 2.5 0l.8.8a1.8 1.8 0 0 1 0 2.5L8.2 19.1z"/><path d="M14.5 6.5l3 3"/></svg>',
+  share: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="12" r="2.6"/><circle cx="18" cy="6" r="2.6"/><circle cx="18" cy="18" r="2.6"/><path d="M8.4 10.8l7.2-3.6M8.4 13.2l7.2 3.6"/></svg>',
+  print: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 8V3h10v5"/><rect x="3.5" y="8" width="17" height="8" rx="1.5"/><path d="M7 13h10v8H7z"/></svg>',
+  doc: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4M9 12h6M9 16h6"/></svg>',
+  chart: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20v-6M10 20V7M16 20v-9"/><path d="M2 20h20"/></svg>',
+  clock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7v5l3.2 2"/></svg>',
+  calendar: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 9.5h17M8 3v3.5M16 3v3.5"/></svg>',
+  search: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg>',
+  star: '<svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 3.5l2.6 5.3 5.9.8-4.3 4.1 1 5.8L12 16.9 6.8 19.5l1-5.8L3.5 9.6l5.9-.8z"/></svg>',
+  starOff: '<svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 3.5l2.6 5.3 5.9.8-4.3 4.1 1 5.8L12 16.9 6.8 19.5l1-5.8L3.5 9.6l5.9-.8z" opacity=".22"/></svg>',
+  arrowLeft: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>',
+  chevL: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>',
+  chevR: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>',
+  spark: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.6 4.4L18 9l-4.4 1.6L12 15l-1.6-4.4L6 9l4.4-1.6z"/><path d="M18.5 14l.9 2.1 2.1.9-2.1.9-.9 2.1-.9-2.1-2.1-.9 2.1-.9z"/></svg>',
+  eye: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.8"/></svg>',
+  users: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.6-3 2.8-4.8 5.5-4.8s4.9 1.8 5.5 4.8"/><circle cx="17" cy="9" r="2.6"/><path d="M15.8 14.6c1.9.3 3.4 1.6 4 3.9"/></svg>',
+  close: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+  refresh: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.3-5.6"/><path d="M20 4v4h-4"/></svg>'
+};
+
+/* ============================================================
+   常量：科目
+   ============================================================ */
+const SUBJECTS = [
+  { key:'yuwen', name:'语文', cls:'sub-yuwen', color:'#E8590C' },
+  { key:'shuxue', name:'数学', cls:'sub-shuxue', color:'#2F6BFF' },
+  { key:'yingyu', name:'英语', cls:'sub-yingyu', color:'#0CA678' },
+  { key:'kexue', name:'科学', cls:'sub-kexue', color:'#7048E8' },
+  { key:'other', name:'其他', cls:'sub-other', color:'#5A6572' }
+];
+const subjectOf = key => SUBJECTS.find(s => s.key === key) || SUBJECTS[4];
+const MASTERY_TXT = { 1:'需加强', 2:'需加强', 3:'一般', 4:'掌握较好', 5:'掌握很好' };
+const AVATAR_COLORS = ['#2F6BFF','#0CA678','#F08C00','#7048E8','#E5484D','#0B7285','#C2255C','#5C7CFA'];
+
+/* ============================================================
+   状态与存储
+   ============================================================ */
+const STORE_KEY = 'hw-workbench-v1';
+let state = load();
+function load(){
+  try{
+    const raw = localStorage.getItem(STORE_KEY);
+    if(raw){ const d = JSON.parse(raw); if(d && Array.isArray(d.students) && Array.isArray(d.homeworks)) return d; }
+  }catch(e){}
+  return { students:[], homeworks:[], comment:{} };
+}
+function save(){ try{ localStorage.setItem(STORE_KEY, JSON.stringify(state)); }catch(e){ toast('存储空间不足，请清理照片'); } }
+
+/* ============================================================
+   数据操作
+   ============================================================ */
+function getStudent(id){ return state.students.find(s => s.id === id); }
+function addStudent(data){
+  const s = { id:uid(), name:data.name.trim(), grade:data.grade.trim(), className:data.className.trim(), avatar:AVATAR_COLORS[state.students.length % AVATAR_COLORS.length], createdAt:Date.now() };
+  state.students.push(s); save(); return s;
+}
+function updateStudent(id, patch){ const s = getStudent(id); if(s){ Object.assign(s, patch); save(); } }
+function deleteStudent(id){
+  state.students = state.students.filter(s => s.id !== id);
+  state.homeworks = state.homeworks.filter(h => h.studentId !== id);
+  save();
+}
+function addHomework(data){
+  const h = { id:uid(), studentId:data.studentId, subject:data.subject, content:data.content.trim(), knowledge:(data.knowledge||'').trim(), assignedDate:data.assignedDate, dueDate:data.dueDate || data.assignedDate, status:data.status || 'pending', completedAt:data.completedAt || null, mastery:data.mastery || null, feedback:data.feedback || '', photo:data.photo || null, note:(data.note||'').trim(), wrong:data.wrong || false, wrongNote:(data.wrongNote||'').trim(), reviewed:data.reviewed || false, createdAt:Date.now() };
+  state.homeworks.push(h); save(); return h;
+}
+function toggleHomework(id){
+  const h = state.homeworks.find(x => x.id === id);
+  if(!h) return;
+  if(h.status === 'pending'){ h.status = 'done'; h.completedAt = new Date().toISOString(); }
+  else { h.status = 'pending'; h.completedAt = null; }
+  save();
+}
+function setMastery(id, val){ const h = state.homeworks.find(x => x.id === id); if(h){ h.mastery = val; save(); } }
+function setFeedback(id, val){ const h = state.homeworks.find(x => x.id === id); if(h){ h.feedback = val; save(); } }
+function toggleWrong(id){ const h = state.homeworks.find(x => x.id === id); if(h){ h.wrong = !h.wrong; if(!h.wrong){ h.wrongNote = ''; } save(); } }
+function setWrongNote(id, val){ const h = state.homeworks.find(x => x.id === id); if(h){ h.wrongNote = val; save(); } }
+function markReviewed(id){ const h = state.homeworks.find(x => x.id === id); if(h){ h.reviewed = !h.reviewed; save(); } }
+function setPhoto(id, dataUrl){ const h = state.homeworks.find(x => x.id === id); if(h){ h.photo = dataUrl; save(); } }
+function deleteHomework(id){ state.homeworks = state.homeworks.filter(h => h.id !== id); save(); }
+function updateHomework(id, patch){ const h = state.homeworks.find(x => x.id === id); if(h){ Object.assign(h, patch); save(); } }
+function setStudentComment(id, txt){ state.comment[id] = txt; save(); }
+function getComment(id){ return state.comment[id] || ''; }
+
+/* ============================================================
+   统计
+   ============================================================ */
+function weekHomeworks(studentId, start){
+  return state.homeworks
+    .filter(h => h.studentId === studentId && inWeek(h.assignedDate, start))
+    .sort((a,b) => a.assignedDate < b.assignedDate ? 1 : (a.assignedDate > b.assignedDate ? -1 : 0));
+}
+function studentWeekStats(studentId, start){
+  const list = weekHomeworks(studentId, start);
+  const total = list.length;
+  const done = list.filter(h => h.status === 'done').length;
+  const rate = total ? done / total : 0;
+  const onTime = list.filter(h => h.status === 'done' && h.completedAt && h.completedAt.slice(0,10) <= (h.dueDate || h.assignedDate)).length;
+  const onTimeRate = done ? onTime / done : 0;
+  const masteryArr = list.filter(h => h.mastery).map(h => h.mastery);
+  const masteryAvg = masteryArr.length ? masteryArr.reduce((a,b)=>a+b,0) / masteryArr.length : null;
+  const wrongList = list.filter(h => h.wrong);
+  const wrongCount = wrongList.length;
+  const wrongReviewed = wrongList.filter(h => h.reviewed).length;
+  const perSubject = {};
+  list.forEach(h => {
+    if(!perSubject[h.subject]) perSubject[h.subject] = { key:h.subject, total:0, done:0, mastery:[], wrong:0 };
+    const p = perSubject[h.subject];
+    p.total++; if(h.status==='done') p.done++;
+    if(h.mastery) p.mastery.push(h.mastery);
+    if(h.wrong) p.wrong++;
+  });
+  Object.values(perSubject).forEach(p => { p.rate = p.total ? p.done/p.total : 0; p.masteryAvg = p.mastery.length ? p.mastery.reduce((a,b)=>a+b,0)/p.mastery.length : null; });
+  return { list, total, done, rate, onTimeRate, masteryAvg, perSubject:Object.values(perSubject), wrongList, wrongCount, wrongReviewed };
+}
+function todayHomeworks(){
+  return state.homeworks
+    .filter(h => h.assignedDate === todayKey())
+    .sort((a,b) => a.status === b.status ? 0 : (a.status === 'pending' ? -1 : 1));
+}
+function allWeekStats(start){
+  return state.students.map(s => ({ student:s, stats:studentWeekStats(s.id, start) }));
+}
+function weekHomeworksAll(start){
+  return state.homeworks.filter(h => inWeek(h.assignedDate, start));
+}
+
+/* ============================================================
+   分析引擎（规则化智能分析，基于真实数据计算）
+   ============================================================ */
+const DOMAIN_MAP = {
+  yuwen:['识字','拼音','阅读','写作','古诗','字词','词语搭配'],
+  shuxue:['计算','口算','应用题','几何','单位换算','四则运算','竖式计算'],
+  yingyu:['单词','句型','听力','阅读','语法','拼写','对话'],
+  kexue:['观察','实验','常识','生活现象','探究','记录'],
+  other:['练习','拓展','背诵','抄写','复习']
+};
+function generateReport(studentId, start){
+  const st = getStudent(studentId);
+  const stats = studentWeekStats(studentId, start);
+  const { total, done, rate, onTimeRate, masteryAvg, perSubject } = stats;
+  const score = Math.round(Math.min(100, rate*55 + onTimeRate*25 + (masteryAvg ? masteryAvg/5*20 : 12)));
+  const grade = score >= 92 ? 'A+' : score >= 85 ? 'A' : score >= 75 ? 'B' : score >= 60 ? 'C' : 'D';
+  const gradeTxt = { 'A+':'优秀','A':'良好','B':'中等','C':'需努力','D':'待加油' }[grade];
+
+  // 学科强弱
+  const weak = perSubject.filter(p => p.rate < 0.6 || (p.masteryAvg !== null && p.masteryAvg < 3));
+  const strong = perSubject.filter(p => p.rate >= 0.8 && (p.masteryAvg === null || p.masteryAvg >= 3.5));
+
+  // 知识点聚合
+  const points = {};
+  stats.list.forEach(h => {
+    const tags = (h.knowledge || '').split(/[,，、;；]/).map(t => t.trim()).filter(Boolean);
+    const useTags = tags.length ? tags : DOMAIN_MAP[h.subject] || [];
+    useTags.forEach(t => {
+      if(!points[t]) points[t] = { name:t, count:0, mastery:[] };
+      points[t].count++;
+      if(h.mastery) points[t].mastery.push(h.mastery);
+    });
+  });
+  const pointList = Object.values(points).map(p => ({ name:p.name, count:p.count, avg: p.mastery.length ? p.mastery.reduce((a,b)=>a+b,0)/p.mastery.length : null }));
+
+  // 生成文字
+  const strongTxt = strong.length ? strong.map(p => subjectOf(p.key).name).join('、') : '各科完成情况较为均衡';
+  const weakTxt = weak.length ? weak.map(p => subjectOf(p.key).name).join('、') : null;
+  const habits = [];
+  if(onTimeRate >= 0.9) habits.push('作业完成及时，能够按计划完成，时间管理习惯良好');
+  else if(onTimeRate >= 0.6) habits.push('大部分作业能按时完成，偶尔有拖延，需继续巩固时间观念');
+  else habits.push('作业完成及时性有待提高，存在部分未按时完成的情况');
+  if(masteryAvg !== null){
+    if(masteryAvg >= 4) habits.push('整体知识掌握程度较好，作业质量稳定');
+    else if(masteryAvg >= 3) habits.push('知识掌握程度中等，仍有提升空间');
+    else habits.push('部分知识点掌握不够扎实，建议加强练习巩固');
+  } else {
+    habits.push('建议老师后续为作业标注掌握程度，可生成更精准的知识点分析');
+  }
+  const weakAdvice = weak.length ? '重点关注 ' + weakTxt + ' 的作业，及时查漏补缺，可适当增加针对性练习。' : '保持各科均衡推进，可适当增加拓展性、开放性作业提升学习深度。';
+  const pointAdvice = pointList.filter(p => p.avg !== null && p.avg < 3).length
+    ? '以下知识点掌握偏弱，建议专项巩固：' + pointList.filter(p => p.avg !== null && p.avg < 3).map(p => p.name).join('、') + '。'
+    : '知识点整体掌握平稳，建议保持练习节奏，通过错题复盘持续巩固。';
+
+  return {
+    student:st, stats, score, grade, gradeTxt, weak, strong, strongTxt, weakTxt,
+    pointList, habits, weakAdvice, pointAdvice, weekLabel:weekLabel(start), start
+  };
+}
+
+/* ============================================================
+   路由
+   ============================================================ */
+function parseHash(){
+  const raw = location.hash.replace(/^#/, '') || 'home';
+  const [path, qs] = raw.split('?');
+  const query = {};
+  if(qs) qs.split('&').forEach(kv => { const [k,v] = kv.split('='); if(k) query[decodeURIComponent(k)] = decodeURIComponent(v||''); });
+  return { path, query };
+}
+let current = parseHash();
+function navigate(path, query){
+  let q = '';
+  if(query){ q = '?' + Object.keys(query).map(k => encodeURIComponent(k) + '=' + encodeURIComponent(query[k])).join('&'); }
+  location.hash = path + q;
+}
+window.addEventListener('hashchange', () => { current = parseHash(); render(); });
+
+/* ============================================================
+   组件
+   ============================================================ */
+function subjectTag(key){ const s = subjectOf(key); return '<span class="sub ' + s.cls + '"><span class="dot"></span>' + s.name + '</span>'; }
+function ring(pct, size, stroke, color){
+  const r = (size - stroke) / 2, c = 2 * Math.PI * r, off = c * (1 - Math.min(1, Math.max(0, pct)));
+  return '<svg width="' + size + '" height="' + size + '" viewBox="0 0 ' + size + ' ' + size + '"><circle cx="' + size/2 + '" cy="' + size/2 + '" r="' + r + '" fill="none" stroke="var(--line)" stroke-width="' + stroke + '"/><circle cx="' + size/2 + '" cy="' + size/2 + '" r="' + r + '" fill="none" stroke="' + color + '" stroke-width="' + stroke + '" stroke-linecap="round" stroke-dasharray="' + c + '" stroke-dashoffset="' + off + '" transform="rotate(-90 ' + size/2 + ' ' + size/2 + ')" style="transition:stroke-dashoffset .5s ease"/></svg>';
+}
+function avatarHtml(s, size){
+  size = size || 48;
+  return '<div class="avatar" style="background:' + s.avatar + ';width:' + size + 'px;height:' + size + 'px;font-size:' + Math.round(size*0.42) + 'px">' + esc(s.name.slice(0,1)) + '</div>';
+}
+function stars(n, max){
+  max = max || 5; let h = '<span class="mastery-dots">';
+  for(let i=1;i<=max;i++){ h += i <= n ? IC.star : IC.starOff; }
+  return h + '</span>';
+}
+function photoThumb(h){
+  if(!h.photo) return '';
+  return '<img class="photo-thumb" src="' + h.photo + '" alt="作业照片" onclick="viewPhoto(\'' + h.id + '\')">';
+}
+function toast(msg){
+  const t = $('#toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(t._timer); t._timer = setTimeout(() => t.classList.remove('show'), 2200);
+}
+function copyText(txt){
+  if(navigator.clipboard && window.isSecureContext){ navigator.clipboard.writeText(txt).then(()=>toast('已复制'), ()=>fallbackCopy(txt)); }
+  else fallbackCopy(txt);
+}
+function fallbackCopy(txt){
+  const ta = document.createElement('textarea'); ta.value = txt; document.body.appendChild(ta); ta.select();
+  try{ document.execCommand('copy'); toast('已复制'); }catch(e){ toast('复制失败'); }
+  document.body.removeChild(ta);
+}
+
+/* ============================================================
+   弹窗
+   ============================================================ */
+function openModal(html){
+  $('#modal-box').innerHTML = html;
+  $('#modal-mask').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeModal(){ $('#modal-mask').classList.remove('open'); document.body.style.overflow = ''; }
+$('#modal-mask').addEventListener('click', e => { if(e.target.id === 'modal-mask') closeModal(); });
+
+/* ============================================================
+   作业表单弹窗
+   ============================================================ */
+function openAddHomework(studentId){
+  const subjectOpts = SUBJECTS.map(s => '<option value="' + s.key + '">' + s.name + '</option>').join('');
+  const students = studentId
+    ? ''
+    : '<div class="form-row"><label>选择学生</label><select id="f-student">' + state.students.map(s => '<option value="' + s.id + '">' + esc(s.name) + '（' + esc(s.grade + s.className) + '）</option>').join('') + '</select></div>';
+  openModal(
+    '<div class="modal-head"><h3>登记作业</h3><button class="modal-close" onclick="closeModal()">' + IC.close + '</button></div>' +
+    '<form onsubmit="submitHomework(event,' + (studentId ? "'" + studentId + "'" : 'null') + ')">' +
+      students +
+      '<div class="form-row"><label>科目</label><select id="f-subject" required>' + subjectOpts + '</select></div>' +
+      '<div class="form-row"><label>作业内容</label><textarea id="f-content" placeholder="例如：完成数学练习册第 12 页" required></textarea></div>' +
+      '<div class="form-row"><div class="inline"><div><label>布置日期</label><input type="date" id="f-date" value="' + todayKey() + '" required></div><div><label>截止日期</label><input type="date" id="f-due" value="' + todayKey() + '"></div></div></div>' +
+      '<div class="form-row"><label>涉及知识点（选填，用于 AI 分析）</label><input id="f-know" placeholder="例如：四则运算、分数加减法"></div>' +
+      '<div class="form-row"><label>备注（选填）</label><input id="f-note" placeholder="例如：课堂未完成，回家补做"></div>' +
+      '<button class="btn btn-primary btn-block" type="submit">保存作业</button>' +
+    '</form>'
+  );
+  if(studentId) $('#f-date').focus();
+}
+function submitHomework(e, studentId){
+  e.preventDefault();
+  const sid = studentId || $('#f-student').value;
+  if(!sid){ toast('请先添加学生'); return; }
+  addHomework({ studentId:sid, subject:$('#f-subject').value, content:$('#f-content').value, assignedDate:$('#f-date').value, dueDate:$('#f-due').value, knowledge:$('#f-know').value, note:$('#f-note').value });
+  closeModal(); toast('作业已登记'); render();
+}
+
+/* ============================================================
+   学生表单弹窗
+   ============================================================ */
+function openAddStudent(){
+  openModal(
+    '<div class="modal-head"><h3>添加学生</h3><button class="modal-close" onclick="closeModal()">' + IC.close + '</button></div>' +
+    '<form onsubmit="submitStudent(event)">' +
+      '<div class="form-row"><label>姓名</label><input id="f-name" placeholder="请输入学生姓名" required></div>' +
+      '<div class="form-row"><div class="inline"><div><label>年级</label><input id="f-grade" placeholder="如：三年级"></div><div><label>班级</label><input id="f-class" placeholder="如：2 班"></div></div></div>' +
+      '<button class="btn btn-primary btn-block" type="submit">保存学生</button>' +
+    '</form>'
+  );
+  setTimeout(()=>$('#f-name').focus(), 60);
+}
+function submitStudent(e){
+  e.preventDefault();
+  const name = $('#f-name').value.trim();
+  if(!name){ toast('请输入姓名'); return; }
+  addStudent({ name, grade:$('#f-grade').value, className:$('#f-class').value });
+  closeModal(); toast('学生已添加'); render();
+}
+function openEditStudent(id){
+  const s = getStudent(id);
+  openModal(
+    '<div class="modal-head"><h3>编辑学生</h3><button class="modal-close" onclick="closeModal()">' + IC.close + '</button></div>' +
+    '<form onsubmit="submitEditStudent(event,\'' + id + '\')">' +
+      '<div class="form-row"><label>姓名</label><input id="f-name" value="' + esc(s.name) + '" required></div>' +
+      '<div class="form-row"><div class="inline"><div><label>年级</label><input id="f-grade" value="' + esc(s.grade) + '"></div><div><label>班级</label><input id="f-class" value="' + esc(s.className) + '"></div></div></div>' +
+      '<div class="form-row" style="margin-bottom:6px"><label>综合评语（家长可见）</label><textarea id="f-comment" placeholder="例如：本周进步很大，继续保持">' + esc(getComment(id)) + '</textarea></div>' +
+      '<button class="btn btn-primary btn-block" type="submit">保存</button>' +
+    '</form>'
+  );
+}
+function submitEditStudent(e, id){
+  e.preventDefault();
+  updateStudent(id, { name:$('#f-name').value.trim(), grade:$('#f-grade').value, className:$('#f-class').value });
+  setStudentComment(id, $('#f-comment').value.trim());
+  closeModal(); toast('已保存'); render();
+}
+
+/* ============================================================
+   掌握度/反馈 弹窗
+   ============================================================ */
+function openRate(id){
+  const h = state.homeworks.find(x => x.id === id);
+  if(!h) return;
+  const s = getStudent(h.studentId);
+  openModal(
+    '<div class="modal-head"><h3>作业详情与点评</h3><button class="modal-close" onclick="closeModal()">' + IC.close + '</button></div>' +
+    '<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">' + avatarHtml(s, 42) +
+      '<div><b>' + esc(s.name) + '</b><div class="hint" style="font-size:12px;color:var(--ink-3)">' + subjectTag(h.subject) + ' · ' + esc(h.content) + '</div></div></div>' +
+    '<div class="form-row"><label>知识点掌握程度</label>' +
+      '<div class="mastery-pick">' + [1,2,3,4,5].map(i =>
+        '<button type="button" class="' + (h.mastery === i ? 'on' : '') + '" onclick="pickMastery(' + id + ',' + i + ',this)">' + (i===1?'需加强':i===2?'偏弱':i===3?'一般':i===4?'较好':'很好') + '</button>'
+      ).join('') + '</div></div>' +
+    '<div class="form-row"><label>老师点评 / 反馈（家长可见）</label><textarea id="f-fb" placeholder="例如：乘法口诀掌握得很好，继续保持">' + esc(h.feedback || '') + '</textarea></div>' +
+    '<button class="btn btn-primary btn-block" onclick="saveFeedback(' + id + ')">保存点评</button>'
+  );
+}
+function pickMastery(id, val, btn){
+  setMastery(id, val);
+  $$('.mastery-pick button', $('#modal-box')).forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  toast('掌握程度：' + MASTERY_TXT[val]);
+}
+function saveFeedback(id){
+  const v = $('#f-fb').value.trim();
+  setFeedback(id, v);
+  closeModal(); toast('点评已保存'); render();
+}
+
+/* ============================================================
+   照片上传
+   ============================================================ */
+let photoTargetId = null;
+function uploadPhoto(id){ photoTargetId = id; $('#file-input').click(); }
+function viewPhoto(id){ const h = state.homeworks.find(x => x.id === id); if(!h || !h.photo) return; viewImage(h.photo); }
+let imageMask = null;
+function viewImage(src){
+  imageMask = document.createElement('div');
+  imageMask.style.cssText = 'position:fixed;inset:0;background:rgba(10,16,28,.86);z-index:300;display:flex;align-items:center;justify-content:center;padding:20px';
+  const img = document.createElement('img');
+  img.src = src; img.style.cssText = 'max-width:100%;max-height:100%;border-radius:12px;object-fit:contain';
+  imageMask.appendChild(img);
+  imageMask.addEventListener('click', () => { imageMask.remove(); imageMask = null; });
+  document.body.appendChild(imageMask);
+}
+$('#file-input').addEventListener('change', function(){
+  const f = this.files && this.files[0];
+  if(!f) return;
+  if(!f.type.startsWith('image/')){ toast('请选择图片'); this.value=''; return; }
+  compressImage(f, dataUrl => {
+    if(photoTargetId){ setPhoto(photoTargetId, dataUrl); photoTargetId = null; toast('作业照片已上传'); render(); }
+    this.value = '';
+  });
+});
+function compressImage(file, cb){
+  const reader = new FileReader();
+  reader.onload = e => {
+    const img = new Image();
+    img.onload = () => {
+      let w = img.width, h = img.height; const max = 1080;
+      if(w > max || h > max){ const r = Math.min(max/w, max/h); w = Math.round(w*r); h = Math.round(h*r); }
+      const c = document.createElement('canvas'); c.width = w; c.height = h;
+      c.getContext('2d').drawImage(img, 0, 0, w, h);
+      cb(c.toDataURL('image/jpeg', 0.72));
+    };
+    img.onerror = () => cb(e.target.result);
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+/* ============================================================
+   视图：今日总览
+   ============================================================ */
+function renderHome(){
+  const now = new Date();
+  const weekday = ['日','一','二','三','四','五','六'][now.getDay()];
+  const dateStr = now.getFullYear() + ' 年 ' + (now.getMonth()+1) + ' 月 ' + now.getDate() + ' 日 · 周' + weekday;
+  const todos = todayHomeworks();
+  const pending = todos.filter(t => t.status === 'pending').length;
+  const doneToday = todos.filter(t => t.status === 'done').length;
+  const start = mondayOf(now);
+  const weekStats = state.students.map(s => ({ s, st:studentWeekStats(s.id, start) }));
+  const weekTotal = weekStats.reduce((a,b) => a + b.st.total, 0);
+  const weekDone = weekStats.reduce((a,b) => a + b.st.done, 0);
+  const weekRate = weekTotal ? Math.round(weekDone/weekTotal*100) : 0;
+
+  let todoHtml = '';
+  if(todos.length){
+    todoHtml = '<div class="todo-list">' + todos.map(t => {
+      const s = getStudent(t.studentId);
+      return '<div class="todo-item ' + (t.status==='done'?'done':'') + '">' +
+        '<button class="check-btn" onclick="toggleHomework(\'' + t.id + '\')">' + IC.check + '</button>' +
+        '<div class="todo-main">' +
+          '<div class="tm">' + avatarHtml(s, 30) + '<b style="font-size:14px">' + esc(s.name) + '</b>' + subjectTag(t.subject) +
+            (t.status==='done' ? '<span class="tag" style="font-size:11px;font-weight:700;color:var(--success);background:var(--success-soft);padding:2px 8px;border-radius:20px">已完成</span>' : '') +
+          '</div>' +
+          '<div class="ct">' + esc(t.content) + '</div>' +
+          '<div class="meta">' + (t.knowledge ? '知识点：' + esc(t.knowledge) : '') + (t.note ? ' · ' + esc(t.note) : '') + '</div>' +
+        '</div>' +
+        '<div class="todo-ops">' + photoThumb(t) +
+          '<button class="icon-btn" title="拍照上传" onclick="uploadPhoto(\'' + t.id + '\')">' + IC.camera + '</button>' +
+        '</div>' +
+      '</div>';
+    }).join('') + '</div>';
+  } else {
+    todoHtml = emptyHtml('calendar', '今天还没有登记的作业', '点击右上角"登记作业"，把孩子今天的作业添加进来');
+  }
+
+  const studentPreview = weekStats.length ? weekStats.map(({s, st}) =>
+    '<div class="student-card" onclick="navigate(\'student\',{id:\'' + s.id + '\'})">' +
+      '<div class="student-top">' + avatarHtml(s) +
+        '<div class="student-meta"><div class="nm">' + esc(s.name) + '</div><div class="cls">' + esc(s.grade + s.className) + ' · 本周 ' + st.done + '/' + st.total + '</div></div>' +
+      '</div>' +
+      '<div class="student-stat"><div class="ring-wrap">' + ring(st.rate, 64, 8, st.rate>=0.8?'var(--success)':(st.rate>=0.5?'var(--accent)':'var(--danger)')) +
+        '<div class="ring-txt"><b>' + Math.round(st.rate*100) + '%</b><span>完成率</span></div></div>' +
+        '<div class="student-bars">' + st.perSubject.slice(0,2).map(p => '<div class="mini-bar"><span>' + subjectOf(p.key).name + '</span><div class="bar"><i class="' + (p.rate>=0.8?'green':p.rate>=0.5?'':'orange') + '" style="width:' + Math.round(p.rate*100) + '%"></i></div></div>').join('') + '</div>' +
+      '</div>' +
+    '</div>'
+  ).join('') : emptyHtml('users', '还没有学生', '先在"学生管理"中添加托管学生，再开始登记作业');
+
+  $('#view-root').innerHTML =
+    '<div class="page-title"><div><h1>今日总览</h1><div class="sub">' + dateStr + '</div></div>' +
+      '<div class="actions" style="align-items:center;gap:14px">' +
+        '<div class="live-clock" id="live-clock"><div class="lc-time" id="lc-time">--:--:--</div><div class="lc-date" id="lc-date">加载中...</div></div>' +
+        '<button class="btn btn-primary" onclick="openAddHomework(null)">' + IC.plus + ' 登记作业</button></div></div>' +
+    '<div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap">' +
+      '<button class="btn btn-ghost" style="flex:1;min-width:130px;justify-content:center" onclick="navigate(\'mistakes\')">' + IC.trash + ' 错题本</button>' +
+      '<button class="btn btn-ghost" style="flex:1;min-width:130px;justify-content:center" onclick="navigate(\'briefing\')">' + IC.chart + ' 成长简报</button>' +
+      '<button class="btn btn-ghost" style="flex:1;min-width:130px;justify-content:center" onclick="navigate(\'analysis\')">' + IC.spark + ' 作业分析</button>' +
+    '</div>' +
+    '<div class="stat-grid">' +
+      statCard(IC.clock, pending, '今日待完成', 'ic-orange') +
+      statCard(IC.check, doneToday, '今日已完成', 'ic-green') +
+      statCard(IC.doc, weekTotal, '本周作业', 'ic-blue') +
+      statCard(IC.chart, weekRate + '%', '本周完成率', 'ic-purple') +
+    '</div>' +
+    '<div class="card"><div class="card-head"><h3>今日作业打卡</h3><span class="hint">点击圆圈完成打卡</span></div>' + todoHtml + '</div>' +
+    '<div class="card"><div class="card-head"><h3>本周学生进度</h3><span class="hint">本周 ' + weekDone + '/' + weekTotal + ' 项已完成</span></div><div class="student-grid">' + studentPreview + '</div></div>';
+  startClock();
+}
+function statCard(icon, num, lbl, cls){
+  return '<div class="stat"><div class="num">' + num + '</div><div class="lbl">' + lbl + '</div><div class="ic ' + cls + '">' + icon + '</div></div>';
+}
+function emptyHtml(ic, title, desc){
+  return '<div class="empty">' + IC[ic] + '<b>' + title + '</b><p>' + desc + '</p></div>';
+}
+
+/* ============================================================
+   视图：学生管理
+   ============================================================ */
+let studentQuery = '';
+function renderStudents(){
+  const start = mondayOf(new Date());
+  const kw = studentQuery.trim();
+  const list = state.students.filter(s => !kw || s.name.includes(kw) || (s.grade + s.className).includes(kw));
+  let html;
+  if(state.students.length === 0){
+    html = emptyHtml('users', '还没有学生', '点击"添加学生"，录入托管学生的基本信息');
+  } else if(list.length === 0){
+    html = emptyHtml('search', '没有找到学生', '换个关键词试试，或点击"添加学生"');
+  } else {
+    html = '<div class="student-grid">' + list.map(s => {
+      const st = studentWeekStats(s.id, start);
+      const pct = Math.round(st.rate*100);
+      const flag = st.rate >= 0.8 ? '<span class="tag" style="color:var(--success);background:var(--success-soft)">进度良好</span>' : (st.rate >= 0.5 ? '<span class="tag" style="color:var(--accent);background:var(--accent-soft)">还需推进</span>' : '<span class="tag" style="color:var(--danger);background:var(--danger-soft)">需要关注</span>');
+      return '<div class="student-card" onclick="navigate(\'student\',{id:\'' + s.id + '\'})">' +
+        '<div class="student-top">' + avatarHtml(s) +
+          '<div class="student-meta"><div class="nm">' + esc(s.name) + '</div><div class="cls">' + esc(s.grade + s.className) + '</div></div></div>' +
+        '<div class="student-stat"><div class="ring-wrap">' + ring(st.rate, 64, 8, st.rate>=0.8?'var(--success)':(st.rate>=0.5?'var(--accent)':'var(--danger)')) +
+          '<div class="ring-txt"><b>' + pct + '%</b><span>完成率</span></div></div>' +
+          '<div class="student-bars">' + st.perSubject.map(p => '<div class="mini-bar"><span>' + subjectOf(p.key).name + '</span><div class="bar"><i class="' + (p.rate>=0.8?'green':p.rate>=0.5?'':'orange') + '" style="width:' + Math.round(p.rate*100) + '%"></i></div></div>').join('') + '</div></div>' +
+        '<div class="student-foot"><span>本周 ' + st.done + '/' + st.total + ' 项</span>' + flag +
+          '<button class="card-del" title="删除学生" onclick="event.stopPropagation();deleteStudentItem(\'' + s.id + '\')">' + IC.trash + '</button>' +
+        '</div>' +
+      '</div>';
+    }).join('') + '</div>';
+  }
+  $('#view-root').innerHTML =
+    '<div class="page-title"><div><h1>学生管理</h1><div class="sub">共 ' + state.students.length + ' 名学生</div></div>' +
+      '<div class="actions"><button class="btn btn-primary" onclick="openAddStudent()">' + IC.plus + ' 添加学生</button></div></div>' +
+    '<div style="position:relative;margin-bottom:16px;max-width:420px">' +
+      '<span style="position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--ink-3);display:flex">' + IC.search + '</span>' +
+      '<input placeholder="搜索学生姓名 / 班级" value="' + esc(studentQuery) + '" style="padding-left:42px" oninput="studentQuery=this.value;renderStudents()">' +
+    '</div>' + html;
+}
+
+/* ============================================================
+   视图：学生详情
+   ============================================================ */
+let detailWeekOffset = 0;
+function renderStudentDetail(){
+  const id = current.query.id;
+  const s = getStudent(id);
+  if(!s){ location.hash = '#students'; return; }
+  const start = mondayOf(new Date()); start.setDate(start.getDate() + detailWeekOffset*7);
+  const st = studentWeekStats(id, start);
+  const pct = Math.round(st.rate*100);
+  const weekKey = toKey(start);
+
+  const grouped = {};
+  st.list.forEach(h => { const d = h.assignedDate; if(!grouped[d]) grouped[d] = []; grouped[d].push(h); });
+  const dayKeys = Object.keys(grouped).sort((a,b) => a < b ? 1 : (a > b ? -1 : 0));
+
+  let listHtml = '';
+  if(dayKeys.length){
+    listHtml = dayKeys.map(d => {
+      const isToday = d === todayKey();
+      const items = grouped[d].map(h => {
+        const done = h.status === 'done';
+        const isWrong = h.wrong;
+        return '<div class="todo-item ' + (done?'done':'') + (isWrong?' wrong-mark':'') + '">' +
+          '<button class="check-btn" onclick="toggleHomework(\'' + h.id + '\')">' + IC.check + '</button>' +
+          '<div class="todo-main">' +
+            '<div class="tm">' + subjectTag(h.subject) +
+              (done ? '<span class="tag" style="font-size:11px;font-weight:700;color:var(--success);background:var(--success-soft);padding:2px 8px;border-radius:20px">已完成</span>' : '<span class="tag" style="font-size:11px;font-weight:700;color:var(--accent);background:var(--accent-soft);padding:2px 8px;border-radius:20px">待完成</span>') +
+              (isWrong ? '<span class="wrong-badge">' + IC.trash.replace('stroke-width="2"','stroke-width="2.4"') + ' 有错误' + (h.reviewed?'·已复习':'') + '</span>' : '') +
+              (h.mastery ? '<span class="hint" style="font-size:11px;color:var(--ink-3)">掌握：' + MASTERY_TXT[h.mastery] + '</span>' : '') +
+            '</div>' +
+            '<div class="ct">' + esc(h.content) + '</div>' +
+            '<div class="meta">' +
+              (h.knowledge ? '<span style="display:inline-flex;align-items:center;gap:4px">' + IC.spark.replace('width="2"','width="1.8"') + ' ' + esc(h.knowledge) + '</span>' : '') +
+              (h.note ? '<span>' + esc(h.note) + '</span>' : '') +
+              (done && h.completedAt ? '<span>完成于 ' + fmtShort(h.completedAt.slice(0,10)) + '</span>' : '') +
+            '</div>' +
+            (isWrong && h.wrongNote ? '<div class="ct" style="font-size:12.5px;color:var(--danger);margin-top:4px">错误说明：' + esc(h.wrongNote) + '</div>' : '') +
+            (h.feedback ? '<div class="ct" style="font-size:12.5px;color:var(--primary);margin-top:4px">点评：' + esc(h.feedback) + '</div>' : '') +
+          '</div>' +
+          '<div class="todo-ops">' + photoThumb(h) +
+            '<button class="icon-btn" title="拍照上传" onclick="uploadPhoto(\'' + h.id + '\')">' + IC.camera + '</button>' +
+            '<button class="icon-btn wrong-btn ' + (isWrong?'active':'') + '" title="' + (isWrong?'取消错误标记':'标记有错误') + '" onclick="toggleWrong(\'' + h.id + '\');render()">' + IC.trash + '</button>' +
+            '<button class="icon-btn" title="点评与掌握度" onclick="openRate(\'' + h.id + '\')">' + IC.edit + '</button>' +
+            '<button class="icon-btn" title="删除" onclick="deleteHomeworkItem(\'' + h.id + '\')">' + IC.trash + '</button>' +
+          '</div>' +
+        '</div>';
+      }).join('');
+      return '<div style="margin-bottom:14px"><div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">' +
+        '<span style="font-weight:700;font-size:14px">' + (isToday ? '今天' : (d === toKey(new Date(Date.now()-86400000)) ? '昨天' : fmtShort(d))) + '</span>' +
+        '<span style="font-size:11.5px;color:var(--ink-3)">' + (isToday ? toKey(new Date()).slice(0,10).replace(/-/g,'.') : '') + ' · ' + items.length + ' 项</span></div>' +
+        '<div class="todo-list">' + items + '</div></div>';
+    }).join('');
+  } else {
+    listHtml = emptyHtml('doc', '本周还没有登记作业', '点击"登记作业"，把这一周孩子的作业添加进来');
+  }
+
+  const isThisWeek = detailWeekOffset === 0;
+  $('#view-root').innerHTML =
+    '<div class="page-title" style="justify-content:flex-start">' +
+      '<button class="icon-btn" onclick="navigate(\'students\')" style="flex:none">' + IC.arrowLeft + '</button>' +
+      '<div style="min-width:0"><h1 style="display:flex;align-items:center;gap:10px">' + esc(s.name) + '<span class="sub" style="font-weight:600">' + esc(s.grade + s.className) + '</span></h1><div class="sub">学生作业详情</div></div>' +
+      '<div class="actions" style="margin-left:auto">' +
+        '<button class="btn btn-ghost btn-sm" onclick="openDailyFeedback(\'' + s.id + '\')">' + IC.doc + ' 每日反馈</button>' +
+        '<button class="btn btn-ghost btn-sm" onclick="navigate(\'parent\',{id:\'' + s.id + '\'})">' + IC.eye + ' 家长视角</button>' +
+        '<button class="btn btn-green btn-sm" onclick="navigate(\'report\',{id:\'' + s.id + '\',week:' + detailWeekOffset + '})">' + IC.doc + ' 生成报告</button>' +
+      '</div></div>' +
+    '<div class="stat-grid" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr))">' +
+      statCard(IC.doc, st.total, '本周作业', 'ic-blue') +
+      statCard(IC.check, st.done, '已完成', 'ic-green') +
+      statCard(IC.chart, pct + '%', '完成率', 'ic-purple') +
+      statCard(IC.clock, Math.round(st.onTimeRate*100) + '%', '按时完成', 'ic-orange') +
+    '</div>' +
+    '<div class="card"><div class="card-head">' +
+      '<div style="display:flex;align-items:center;gap:8px">' +
+        '<button class="icon-btn" onclick="detailWeekOffset++;renderStudentDetail()">' + IC.chevL + '</button>' +
+        '<b>' + weekLabel(start) + '</b>' +
+        '<button class="icon-btn" onclick="detailWeekOffset--;renderStudentDetail()">' + IC.chevR + '</button>' +
+      '</div>' +
+      '<span class="hint">' + (isThisWeek ? '本周' : '历史周') + '</span></div>' +
+      listHtml +
+    '</div>' +
+    '<div style="margin-top:14px;display:flex;gap:10px">' +
+      '<button class="btn btn-primary" style="flex:1" onclick="openAddHomework(\'' + s.id + '\')">' + IC.plus + ' 登记作业</button>' +
+      '<button class="btn btn-ghost" onclick="openEditStudent(\'' + s.id + '\')">' + IC.edit + ' 编辑学生</button>' +
+      '<button class="btn btn-ghost" style="color:var(--danger)" onclick="deleteStudentItem(\'' + s.id + '\')">' + IC.trash + ' 删除</button>' +
+    '</div>';
+}
+function deleteHomeworkItem(id){
+  const h = state.homeworks.find(x => x.id === id);
+  if(!h) return;
+  if(confirm('确定删除这条作业吗？')){ deleteHomework(id); toast('已删除'); render(); }
+}
+function deleteStudentItem(id){
+  const s = getStudent(id);
+  if(!s) return;
+  if(confirm('删除学生「' + s.name + '」将同时删除其全部作业记录，确定吗？')){ deleteStudent(id); toast('已删除'); render(); }
+}
+
+/* ============================================================
+   视图：周报统计
+   ============================================================ */
+let weeklyOffset = 0;
+function renderWeekly(){
+  const start = mondayOf(new Date()); start.setDate(start.getDate() + weeklyOffset*7);
+  const rows = allWeekStats(start);
+  const classTotal = rows.reduce((a,b) => a + b.stats.total, 0);
+  const classDone = rows.reduce((a,b) => a + b.stats.done, 0);
+  const classRate = classTotal ? Math.round(classDone/classTotal*100) : 0;
+  const minRow = rows.filter(r => r.stats.total > 0).sort((a,b) => a.stats.rate - b.stats.rate)[0];
+
+  let body = '';
+  if(state.students.length === 0){
+    body = '<tr><td colspan="5">' + emptyHtml('users', '暂无学生数据', '请先添加学生并登记作业') + '</td></tr>';
+  } else {
+    body = rows.map(r => {
+      const s = r.student, st = r.stats;
+      const pct = Math.round(st.rate*100);
+      return '<tr>' +
+        '<td><div style="display:flex;align-items:center;gap:10px">' + avatarHtml(s, 34) + '<b>' + esc(s.name) + '</b></div></td>' +
+        '<td>' + esc(s.grade + s.className) + '</td>' +
+        '<td>' + st.done + ' / ' + st.total + '</td>' +
+        '<td><div class="progress-cell"><div class="bar"><i style="width:' + pct + '%' + (pct>=80?';background:linear-gradient(90deg,#20B571,#38D08B)':pct>=50?';background:linear-gradient(90deg,#FF9445,#FFB26B)':'') + '"></i></div><span class="rate-badge" style="color:' + (pct>=80?'var(--success)':pct>=50?'var(--accent)':'var(--danger)') + '">' + pct + '%</span></div></td>' +
+        '<td>' + st.perSubject.map(p => subjectOf(p.key).name + ' ' + Math.round(p.rate*100) + '%').join('　') + '</td>' +
+      '</tr>';
+    }).join('');
+  }
+
+  $('#view-root').innerHTML =
+    '<div class="page-title"><div><h1>周报统计</h1><div class="sub">全班作业完成情况一览</div></div>' +
+      '<div class="actions"><button class="btn btn-ghost" onclick="weeklyOffset++;renderWeekly()">' + IC.chevL + ' 上一周</button>' +
+      '<b style="white-space:nowrap">' + weekLabel(start) + '</b>' +
+      '<button class="btn btn-ghost" onclick="weeklyOffset--;renderWeekly()">下一周 ' + IC.chevR + '</button></div></div>' +
+    '<div class="stat-grid">' +
+      statCard(IC.users, rows.length, '学生人数', 'ic-blue') +
+      statCard(IC.doc, classTotal, '作业总数', 'ic-purple') +
+      statCard(IC.check, classDone, '已完成', 'ic-green') +
+      statCard(IC.chart, classRate + '%', '全班完成率', 'ic-orange') +
+    '</div>' +
+    (minRow && classTotal > 0 ? '<div class="advice" style="margin-bottom:16px;border-left-color:var(--accent)">' + IC.spark + '<div><b>本周重点关注：</b>' + esc(minRow.student.name) + ' 完成率 ' + Math.round(minRow.stats.rate*100) + '%，建议家长协同督促，及时了解原因。</div></div>' : '') +
+    '<div class="table-wrap"><table><thead><tr><th>学生</th><th>班级</th><th>完成数</th><th>完成率</th><th>各科完成率</th></tr></thead><tbody>' + body + '</tbody></table></div>' +
+    '<div style="margin-top:14px"><button class="btn btn-primary btn-block" onclick="openReportPicker()">' + IC.doc + ' 为某位学生生成分析报告</button></div>';
+}
+function openReportPicker(){
+  openModal(
+    '<div class="modal-head"><h3>选择学生生成报告</h3><button class="modal-close" onclick="closeModal()">' + IC.close + '</button></div>' +
+    (state.students.length ? '<div class="todo-list">' + state.students.map(s =>
+      '<button class="todo-item" style="width:100%;text-align:left;cursor:pointer" onclick="navigate(\'report\',{id:\'' + s.id + '\'});closeModal()"><div style="display:flex;align-items:center;gap:12px">' + avatarHtml(s, 40) + '<div><b>' + esc(s.name) + '</b><div class="hint" style="font-size:12px;color:var(--ink-3)">' + esc(s.grade + s.className) + '</div></div></div></button>'
+    ).join('') + '</div>' : '<div class="empty">' + IC.users + '<b>暂无学生</b><p>请先添加学生</p></div>')
+  );
+}
+function openParentPicker(){
+  openModal(
+    '<div class="modal-head"><h3>选择学生查看家长视角</h3><button class="modal-close" onclick="closeModal()">' + IC.close + '</button></div>' +
+    (state.students.length ? '<div class="todo-list">' + state.students.map(s =>
+      '<button class="todo-item" style="width:100%;text-align:left;cursor:pointer" onclick="navigate(\'parent\',{id:\'' + s.id + '\'});closeModal()"><div style="display:flex;align-items:center;gap:12px">' + avatarHtml(s, 40) + '<div><b>' + esc(s.name) + '</b><div class="hint" style="font-size:12px;color:var(--ink-3)">' + esc(s.grade + s.className) + '</div></div></div></button>'
+    ).join('') + '</div>' : '<div class="empty">' + IC.users + '<b>暂无学生</b><p>请先添加学生</p></div>')
+  );
+}
+
+/* ============================================================
+   视图：作业分析（独立分析页）
+   ============================================================ */
+let analysisStudentId = null;
+let analysisOffset = 0;
+function renderAnalysis(){
+  if(!state.students.length){
+    $('#view-root').innerHTML = '<div class="page-title"><div><h1>作业分析</h1><div class="sub">基于作业数据的智能分析</div></div></div><div class="card">' + emptyHtml('spark', '暂无学生数据', '请先在"学生管理"中添加学生并登记作业') + '</div>';
+    return;
+  }
+  if(!analysisStudentId || !getStudent(analysisStudentId)) analysisStudentId = state.students[0].id;
+  const s = getStudent(analysisStudentId);
+  const start = mondayOf(new Date()); start.setDate(start.getDate() + analysisOffset*7);
+  const r = generateReport(analysisStudentId, start);
+  const st = r.stats;
+
+  // 学科条
+  let subjectRows = '';
+  if(st.perSubject.length){
+    subjectRows = st.perSubject.map(p => {
+      const col = subjectOf(p.key).color;
+      const pct = Math.round(p.rate*100);
+      const avg = p.masteryAvg !== null ? p.masteryAvg.toFixed(1) : null;
+      return '<div class="subject-row">' + subjectTag(p.key) +
+        '<div class="bar"><i style="width:' + pct + '%;background:' + col + '"></i></div>' +
+        '<div class="val">' + pct + '%' + (avg !== null ? ' · 掌握' + avg : '') + '</div></div>';
+    }).join('');
+  } else {
+    subjectRows = '<div class="empty" style="padding:14px">' + IC.doc + '<b>本周暂无作业</b><p>登记作业后即可生成学科分析</p></div>';
+  }
+
+  // 知识点卡片
+  let pointsHtml = '';
+  if(r.pointList.length){
+    pointsHtml = '<div class="knowledge-grid">' + r.pointList.map(p => {
+      const lvl = p.avg === null ? '<span class="lvl" style="color:var(--ink-3)">待评估</span>' :
+        (p.avg >= 4 ? '<span class="lvl good">掌握良好 ' + stars(Math.round(p.avg)) + '</span>' :
+        (p.avg >= 3 ? '<span class="lvl mid">基本掌握 ' + stars(Math.round(p.avg)) + '</span>' :
+        '<span class="lvl bad">需加强 ' + stars(Math.round(p.avg)) + '</span>'));
+      return '<div class="knowledge-card"><div class="kn">' + esc(p.name) + '<span class="cnt">出现 ' + p.count + ' 次</span></div>' + lvl + '</div>';
+    }).join('') + '</div>';
+  } else {
+    pointsHtml = '<div class="hint" style="color:var(--ink-3);font-size:13px">登记作业时填写"涉及知识点"，即可生成知识点掌握分析。系统也会根据科目自动归类常见知识点。</div>';
+  }
+
+  // 薄弱提醒
+  let weakHtml = '';
+  if(r.weak.length){
+    weakHtml = '<div class="weak-alert">' + IC.spark + '<div><b>本周薄弱环节：</b>' + r.weak.map(p => subjectOf(p.key).name).join('、') + ' 完成率或掌握度偏低，建议重点辅导。<br><span style="font-size:13px;color:var(--ink-2)">' + r.weakAdvice + '</span></div></div>';
+  }
+
+  const studentOpts = state.students.map(x => '<option value="' + x.id + '"' + (x.id===analysisStudentId?' selected':'') + '>' + esc(x.name) + '（' + esc(x.grade + x.className) + '）</option>').join('');
+
+  $('#view-root').innerHTML =
+    '<div class="page-title"><div><h1>作业分析</h1><div class="sub">基于作业数据的智能分析 · 知识点掌握诊断</div></div>' +
+      '<div class="actions"><button class="btn btn-ghost btn-sm" onclick="navigate(\'report\',{id:\'' + s.id + '\',week:' + analysisOffset + '})">' + IC.doc + ' 生成完整报告</button></div></div>' +
+    '<div class="analysis-picker">' +
+      '<label style="margin:0;white-space:nowrap">选择学生</label>' +
+      '<select onchange="analysisStudentId=this.value;renderAnalysis()">' + studentOpts + '</select>' +
+      '<button class="icon-btn" onclick="analysisOffset++;renderAnalysis()">' + IC.chevL + '</button>' +
+      '<b style="white-space:nowrap;font-size:13px">' + weekLabel(start) + '</b>' +
+      '<button class="icon-btn" onclick="analysisOffset--;renderAnalysis()">' + IC.chevR + '</button>' +
+    '</div>' +
+    '<div class="analysis-hero">' +
+      '<div class="ah-top">' + avatarHtml(s, 48) +
+        '<div><h2>' + esc(s.name) + ' 的作业分析</h2>' +
+        '<div class="ah-sub">' + esc(s.grade + s.className) + ' · ' + r.weekLabel + ' · 智能诊断</div></div>' +
+        '<div class="score-big"><b>' + r.score + '</b><span>综合评分 · ' + r.grade + ' ' + r.gradeTxt + '</span></div></div>' +
+      '<div class="ah-kpis">' +
+        '<div class="ah-kpi"><b>' + st.total + '</b><span>作业总数</span></div>' +
+        '<div class="ah-kpi"><b>' + st.done + '/' + st.total + '</b><span>已完成</span></div>' +
+        '<div class="ah-kpi"><b>' + Math.round(st.rate*100) + '%</b><span>完成率</span></div>' +
+        '<div class="ah-kpi"><b>' + Math.round(st.onTimeRate*100) + '%</b><span>按时完成</span></div>' +
+      '</div></div>' +
+    '<div class="card"><div class="card-head"><h3>学科完成与掌握</h3><span class="hint">各科完成率与平均掌握度</span></div>' + subjectRows + '</div>' +
+    '<div class="card"><div class="card-head"><h3>知识点掌握热力图</h3><span class="hint">共 ' + r.pointList.length + ' 个知识点 · 颜色越深掌握越好</span></div><div class="heatmap-wrap">' + heatmapHtml(r.pointList) + '</div></div>' +
+    '<div class="card"><div class="card-head"><h3>知识点掌握诊断</h3><span class="hint">详细掌握度评级</span></div>' + pointsHtml + '</div>' +
+    (weakHtml ? '<div class="card"><div class="card-head"><h3>薄弱环节提醒</h3></div>' + weakHtml + '</div>' : '') +
+    '<div class="card"><div class="card-head"><h3>学习习惯与表现</h3></div>' +
+      r.habits.map(h => '<div class="advice" style="border-left-color:var(--primary)">' + IC.check + '<div>' + h + '</div></div>').join('') +
+      '<div class="advice" style="border-left-color:var(--accent);margin-top:10px">' + IC.spark + '<div>' + r.pointAdvice + '</div></div>' +
+    '</div>' +
+    '<div class="card"><div class="card-head"><h3>🤖 AI 智能建议</h3><span class="hint">基于作业数据的个性化辅导建议</span></div>' +
+      aiSuggestions(r).map(sg =>
+        '<div style="margin-bottom:14px">' +
+          '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;font-weight:700;font-size:14px;color:' + sg.color + '"><span style="font-size:18px">' + sg.icon + '</span> ' + sg.title + '</div>' +
+          sg.items.map(item => '<div class="advice" style="border-left-color:' + sg.color + ';margin-bottom:6px"><div style="font-size:13px;line-height:1.7">' + item + '</div></div>').join('') +
+        '</div>'
+      ).join('') +
+    '</div>' +
+    '<div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">' +
+      '<button class="btn btn-primary" style="flex:1;min-width:160px" onclick="navigate(\'report\',{id:\'' + s.id + '\',week:' + analysisOffset + '})">' + IC.doc + ' 生成完整分析报告</button>' +
+      '<button class="btn btn-ghost" style="flex:1;min-width:160px" onclick="navigate(\'briefing\')">' + IC.chart + ' 每周成长简报</button>' +
+      '<button class="btn btn-ghost" style="flex:1;min-width:160px" onclick="navigate(\'student\',{id:\'' + s.id + '\'})">' + IC.eye + ' 查看作业明细</button>' +
+    '</div>';
+}
+
+/* ============================================================
+   视图：分析报告
+   ============================================================ */
+function renderReport(){
+  const id = current.query.id;
+  const off = parseInt(current.query.week || '0', 10) || 0;
+  if(!id){
+    if(state.students.length){ openReportPicker(); $('#view-root').innerHTML = ''; return; }
+    $('#view-root').innerHTML = '<div class="card">' + emptyHtml('doc', '请先添加学生', '添加学生并登记作业后，即可为学生生成分析报告') + '</div>';
+    return;
+  }
+  const s = getStudent(id);
+  if(!s){ navigate('report'); return; }
+  const start = mondayOf(new Date()); start.setDate(start.getDate() + off*7);
+  const r = generateReport(id, start);
+
+  // 学科条
+  let subjectRows = '';
+  if(r.stats.perSubject.length){
+    subjectRows = r.stats.perSubject.map(p => {
+      const col = subjectOf(p.key).color;
+      const pct = Math.round(p.rate*100);
+      const avg = p.masteryAvg !== null ? Math.round(p.masteryAvg*10)/10 : null;
+      return '<div class="subject-row">' + subjectTag(p.key) +
+        '<div class="bar"><i style="width:' + pct + '%;background:' + col + '"></i></div>' +
+        '<div class="val">' + pct + '%' + (avg !== null ? ' · 掌握' + avg + '/' + '5' : '') + '</div></div>';
+    }).join('');
+  } else {
+    subjectRows = '<div class="empty" style="padding:16px">' + IC.doc + '<b>本周暂无作业</b><p>登记作业后才能生成学科分析</p></div>';
+  }
+
+  // 知识点
+  let pointsHtml = '';
+  if(r.pointList.length){
+    pointsHtml = r.pointList.map(p => {
+      const lvl = p.avg === null ? '<span class="hint" style="font-size:11px;color:var(--ink-3)">待评估</span>' : (p.avg >= 4 ? '<span style="color:var(--success);font-weight:700">掌握良好</span>' : (p.avg >= 3 ? '<span style="color:var(--accent);font-weight:700">基本掌握</span>' : '<span style="color:var(--danger);font-weight:700">需加强</span>'));
+      return '<span class="point-tag">' + esc(p.name) + ' ×' + p.count + ' ' + lvl + '</span>';
+    }).join('');
+  } else {
+    pointsHtml = '<div class="hint" style="color:var(--ink-3)">登记作业时填写"涉及知识点"即可生成知识点掌握分析。</div>';
+  }
+
+  const teacherComment = getComment(id);
+
+  $('#view-root').innerHTML =
+    '<div class="page-title"><div><h1>分析报告</h1><div class="sub">' + esc(s.name) + ' · ' + r.weekLabel + '</div></div>' +
+      '<div class="actions"><button class="btn btn-ghost btn-sm" onclick="navigate(\'student\',{id:\'' + s.id + '\'})">返回学生</button></div></div>' +
+    '<div class="report">' +
+      '<div class="report-tools no-print">' +
+        '<button class="btn btn-primary" onclick="copyParentLink(\'' + s.id + '\')">' + IC.share + ' 复制家长查看链接</button>' +
+        '<button class="btn btn-ghost" onclick="window.print()">' + IC.print + ' 打印 / 存为 PDF</button>' +
+        '<button class="btn btn-ghost" onclick="navigate(\'parent\',{id:\'' + s.id + '\'})">' + IC.eye + ' 家长视角预览</button>' +
+      '</div>' +
+      '<div class="report-head">' +
+        '<div class="rh-top">' + avatarHtml(s, 52) +
+          '<div><h1>' + esc(s.name) + ' 的作业报告</h1>' +
+          '<div class="rh-sub">' + esc(s.grade + s.className) + ' · ' + r.weekLabel + ' · 智能分析</div></div>' +
+          '<div class="grade-badge"><b>' + r.grade + '</b><span>' + r.gradeTxt + '</span></div></div>' +
+      '</div>' +
+      '<div class="report-section"><h3><span class="ico ic-blue">' + IC.chart + '</span>完成情况概览</h3>' +
+        '<div class="kv">' +
+          kv('作业总数', r.stats.total + ' 项') +
+          kv('已完成', r.stats.done + ' 项') +
+          kv('完成率', Math.round(r.stats.rate*100) + '%') +
+          kv('按时完成率', Math.round(r.stats.onTimeRate*100) + '%') +
+          kv('综合评分', r.score + ' 分') +
+          kv('平均掌握度', r.stats.masteryAvg !== null ? r.stats.masteryAvg.toFixed(1) + ' / 5' : '待评估') +
+        '</div></div>' +
+      '<div class="report-section"><h3><span class="ico ic-purple">' + IC.doc + '</span>学科完成情况</h3>' + subjectRows + '</div>' +
+      '<div class="report-section"><h3><span class="ico ic-green">' + IC.spark + '</span>知识点掌握分析</h3>' + pointsHtml + '</div>' +
+      '<div class="report-section"><h3><span class="ico ic-orange">' + IC.eye + '</span>学习习惯与表现</h3>' +
+        r.habits.map(h => '<div class="advice" style="border-left-color:var(--primary)">' + IC.check + '<div>' + h + '</div></div>').join('') +
+      '</div>' +
+      '<div class="report-section"><h3><span class="ico ic-blue">' + IC.clock + '</span>薄弱环节与建议</h3>' +
+        '<div class="advice">' + IC.spark + '<div>' + r.weakAdvice + '</div></div>' +
+        '<div class="advice">' + IC.spark + '<div>' + r.pointAdvice + '</div></div>' +
+      '</div>' +
+      '<div class="report-section"><h3><span class="ico ic-green">' + IC.edit + '</span>老师综合评语</h3>' +
+        '<textarea id="report-comment" placeholder="填写本周综合评语，家长可在家长视角中看到" style="min-height:90px">' + esc(teacherComment) + '</textarea>' +
+        '<div style="margin-top:10px"><button class="btn btn-green btn-sm" onclick="saveReportComment(\'' + s.id + '\')">保存评语</button></div>' +
+      '</div>' +
+      '<div class="hint" style="text-align:center;padding:14px 0 4px;color:var(--ink-3)">' +
+        '<span style="display:inline-flex;align-items:center;gap:6px;vertical-align:middle">' + IC.spark + ' 本报告由作业数据自动分析生成，仅供参考，请结合孩子实际情况使用</span>' +
+      '</div>' +
+    '</div>';
+}
+function kv(k, v){ return '<div class="kv-item"><div class="k">' + k + '</div><div class="v">' + v + '</div></div>'; }
+function saveReportComment(id){
+  setStudentComment(id, $('#report-comment').value.trim());
+  toast('评语已保存');
+}
+
+/* ============================================================
+   视图：家长视角
+   ============================================================ */
+function renderParent(){
+  const id = current.query.id;
+  const s = getStudent(id);
+  if(!s){ $('#view-root').innerHTML = '<div class="card">' + emptyHtml('eye', '未找到学生', '家长链接无效，请联系托管老师获取正确链接') + '</div>'; return; }
+  const start = mondayOf(new Date());
+  const st = studentWeekStats(s.id, start);
+  const pct = Math.round(st.rate*100);
+
+  const grouped = {};
+  st.list.forEach(h => { const d = h.assignedDate; if(!grouped[d]) grouped[d] = []; grouped[d].push(h); });
+  const dayKeys = Object.keys(grouped).sort((a,b) => a < b ? 1 : (a > b ? -1 : 0));
+  let listHtml = '';
+  if(dayKeys.length){
+    listHtml = dayKeys.map(d => {
+      const items = grouped[d].map(h => {
+        const done = h.status === 'done';
+        return '<div class="todo-item ' + (done?'done':'') + '" style="cursor:default">' +
+          '<div class="check-btn" style="border-width:2px;cursor:default">' + IC.check + '</div>' +
+          '<div class="todo-main"><div class="tm">' + subjectTag(h.subject) +
+            (done ? '<span class="tag" style="font-size:11px;font-weight:700;color:var(--success);background:var(--success-soft);padding:2px 8px;border-radius:20px">已完成</span>' : '<span class="tag" style="font-size:11px;font-weight:700;color:var(--warn);background:var(--warn-soft);padding:2px 8px;border-radius:20px">进行中</span>') +
+          '</div><div class="ct">' + esc(h.content) + '</div>' +
+          '<div class="meta">' + (h.knowledge ? '知识点：' + esc(h.knowledge) : '') + (h.feedback ? ' · <span style="color:var(--primary)">老师点评：' + esc(h.feedback) + '</span>' : '') + '</div>' +
+          '</div><div class="todo-ops">' + photoThumb(h) + '</div></div>';
+      }).join('');
+      return '<div style="margin-bottom:14px"><div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><span style="font-weight:700;font-size:14px">' + fmtShort(d) + '</span><span style="font-size:11.5px;color:var(--ink-3)">' + items.length + ' 项</span></div><div class="todo-list">' + items + '</div></div>';
+    }).join('');
+  } else {
+    listHtml = emptyHtml('doc', '本周暂无作业记录', '老师登记作业后即可在此查看');
+  }
+
+  const comment = getComment(id);
+  const report = generateReport(id, start);
+
+  $('#view-root').innerHTML =
+    '<div class="parent-shell">' +
+      '<div class="parent-hero">' +
+        '<h1>' + avatarHtml(s, 40) + esc(s.name) + ' 的作业情况</h1>' +
+        '<p>' + report.weekLabel + ' · 本周作业完成情况 · 托管老师同步</p>' +
+        '<div class="ph-stats">' +
+          '<div class="phs"><b>' + st.done + '/' + st.total + '</b><span>完成作业</span></div>' +
+          '<div class="phs"><b>' + pct + '%</b><span>本周完成率</span></div>' +
+          '<div class="phs"><b>' + report.grade + '</b><span>综合评级</span></div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="report-section"><h3><span class="ico ic-blue">' + IC.chart + '</span>本周完成情况</h3>' +
+        '<div class="kv">' +
+          kv('作业总数', st.total + ' 项') +
+          kv('已完成', st.done + ' 项') +
+          kv('完成率', pct + '%') +
+          kv('按时完成', Math.round(st.onTimeRate*100) + '%') +
+        '</div></div>' +
+      '<div class="card"><div class="card-head"><h3>每日作业明细</h3><span class="hint">点击照片可放大查看</span></div>' + listHtml + '</div>' +
+      (comment ? '<div class="report-section"><h3><span class="ico ic-green">' + IC.edit + '</span>老师评语</h3><div style="font-size:14.5px">' + esc(comment) + '</div></div>' : '') +
+      '<div class="report-section"><h3><span class="ico ic-purple">' + IC.spark + '</span>分析摘要</h3>' +
+        '<div class="hint" style="color:var(--ink-3);font-size:12.5px;margin-bottom:8px">' + report.weakAdvice + '</div>' +
+        '<div class="advice" style="border-left-color:var(--primary)">' + IC.check + '<div>' + report.habits[0] + '</div></div>' +
+      '</div>' +
+      '<div class="hint no-print" style="text-align:center;padding:16px 0;color:var(--ink-3)">' +
+        '<button class="btn btn-ghost btn-sm" onclick="navigate(\'student\',{id:\'' + s.id + '\'})">返回老师工作台</button>' +
+      '</div>' +
+    '</div>';
+}
+
+/* ============================================================
+   家长链接
+   ============================================================ */
+function copyParentLink(id){
+  const base = location.href.split('#')[0];
+  copyText(base + '#parent?id=' + id);
+}
+
+/* ============================================================
+   备份 / 恢复
+   ============================================================ */
+function exportData(){
+  const blob = new Blob([JSON.stringify(state)], { type:'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = '作业工作台备份-' + todayKey() + '.json';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  toast('备份文件已导出');
+}
+$('#btn-export').addEventListener('click', exportData);
+$('#btn-import').addEventListener('click', () => $('#json-input').click());
+$('#json-input').addEventListener('change', function(){
+  const f = this.files && this.files[0];
+  if(!f) return;
+  const r = new FileReader();
+  r.onload = () => {
+    try{
+      const d = JSON.parse(r.result);
+      if(!d || !Array.isArray(d.students) || !Array.isArray(d.homeworks)) throw new Error('bad');
+      state = { students:d.students, homeworks:d.homeworks, comment:d.comment || {} };
+      save(); toast('数据已恢复'); render();
+    }catch(e){ toast('备份文件格式不正确'); }
+    this.value = '';
+  };
+  r.readAsText(f);
+});
+
+/* ============================================================
+   功能：一键生成每日反馈
+   ============================================================ */
+function openDailyFeedback(studentId){
+  const s = getStudent(studentId);
+  if(!s) return;
+  const today = todayKey();
+  const todayList = state.homeworks.filter(h => h.studentId === studentId && h.assignedDate === today);
+  const doneList = todayList.filter(h => h.status === 'done');
+  const pendingList = todayList.filter(h => h.status === 'pending');
+  const wrongList = todayList.filter(h => h.wrong);
+  const now = new Date();
+  const weekday = ['日','一','二','三','四','五','六'][now.getDay()];
+  const dateStr = now.getFullYear() + '年' + (now.getMonth()+1) + '月' + now.getDate() + '日 周' + weekday;
+
+  let lines = [];
+  lines.push('【' + s.name + ' 每日作业反馈】');
+  lines.push('📅 ' + dateStr);
+  lines.push('');
+  lines.push('✅ 今日完成情况：' + doneList.length + '/' + todayList.length + ' 项');
+  if(doneList.length){
+    lines.push('');
+    lines.push('已完成作业：');
+    doneList.forEach((h,i) => {
+      const sub = subjectOf(h.subject).name;
+      const mastery = h.mastery ? '（掌握：' + MASTERY_TXT[h.mastery] + '）' : '';
+      lines.push((i+1) + '. [' + sub + '] ' + h.content + mastery);
+    });
+  }
+  if(pendingList.length){
+    lines.push('');
+    lines.push('⏳ 待完成作业：');
+    pendingList.forEach((h,i) => {
+      lines.push((i+1) + '. [' + subjectOf(h.subject).name + '] ' + h.content);
+    });
+  }
+  if(wrongList.length){
+    lines.push('');
+    lines.push('❌ 需订正：');
+    wrongList.forEach((h,i) => {
+      lines.push((i+1) + '. [' + subjectOf(h.subject).name + '] ' + h.content + (h.wrongNote ? '（' + h.wrongNote + '）' : ''));
+    });
+  }
+  const knowledgeSet = new Set();
+  doneList.forEach(h => { if(h.knowledge) h.knowledge.split(/[,，、;；]/).forEach(t => t.trim() && knowledgeSet.add(t.trim())); });
+  if(knowledgeSet.size){
+    lines.push('');
+    lines.push('📚 今日涉及知识点：' + Array.from(knowledgeSet).join('、'));
+  }
+  const feedbacks = doneList.filter(h => h.feedback).map(h => h.feedback);
+  if(feedbacks.length){
+    lines.push('');
+    lines.push('💬 老师点评：');
+    feedbacks.forEach((f,i) => lines.push((i+1) + '. ' + f));
+  }
+  lines.push('');
+  if(pendingList.length){
+    lines.push('📌 温馨提示：还有 ' + pendingList.length + ' 项作业待完成，请家长协助督促孩子尽快完成。');
+  } else if(wrongList.length){
+    lines.push('📌 温馨提示：今日有 ' + wrongList.length + ' 项作业存在错误，请孩子及时订正，家长可协助检查。');
+  } else {
+    lines.push('🎉 今日作业全部完成，表现很棒！请继续保持！');
+  }
+  lines.push('');
+  lines.push('—— ' + '刘老师高效学习托管工作室');
+
+  const text = lines.join('\n');
+  openModal(
+    '<div class="modal-head"><h3>每日反馈 · ' + esc(s.name) + '</h3><button class="modal-close" onclick="closeModal()">' + IC.close + '</button></div>' +
+    '<div class="hint" style="font-size:12.5px;color:var(--ink-3);margin-bottom:10px">已根据今日作业数据自动生成，可直接复制发送给家长</div>' +
+    '<textarea class="feedback-text" id="daily-fb-text" readonly>' + esc(text) + '</textarea>' +
+    '<div class="feedback-actions">' +
+      '<button class="btn btn-primary" style="flex:1" onclick="copyText(document.getElementById(\'daily-fb-text\').value)">' + IC.doc + ' 复制全部内容</button>' +
+      '<button class="btn btn-ghost" onclick="closeModal()">关闭</button>' +
+    '</div>'
+  );
+}
+
+/* ============================================================
+   功能：知识点热力图（生成HTML）
+   ============================================================ */
+function heatmapHtml(pointList){
+  if(!pointList.length) return '<div class="hint" style="color:var(--ink-3);font-size:13px;padding:10px 0">暂无知识点数据，登记作业时填写"涉及知识点"即可生成热力图</div>';
+  const legend = '<div class="heatmap-legend">' +
+    '<span class="lg"><span class="sw" style="background:#20B571"></span>掌握很好(≥4.5)</span>' +
+    '<span class="lg"><span class="sw" style="background:#51CF66"></span>掌握良好(4-4.5)</span>' +
+    '<span class="lg"><span class="sw" style="background:#FFD43B"></span>基本掌握(3-4)</span>' +
+    '<span class="lg"><span class="sw" style="background:#FF922B"></span>需加强(2-3)</span>' +
+    '<span class="lg"><span class="sw" style="background:#FA5252"></span>薄弱(<2)</span>' +
+    '<span class="lg"><span class="sw" style="background:var(--surface-2);border:1px solid var(--line)"></span>待评估</span>' +
+  '</div>';
+  const cells = pointList.map(p => {
+    let cls = 'heat-none', label = '待评估';
+    if(p.avg !== null){
+      if(p.avg >= 4.5){ cls = 'heat-strong'; label = '掌握很好'; }
+      else if(p.avg >= 4){ cls = 'heat-good'; label = '掌握良好'; }
+      else if(p.avg >= 3){ cls = 'heat-mid'; label = '基本掌握'; }
+      else if(p.avg >= 2){ cls = 'heat-weak'; label = '需加强'; }
+      else { cls = 'heat-bad'; label = '薄弱'; }
+    }
+    const avgText = p.avg !== null ? p.avg.toFixed(1) + '/5' : '—';
+    return '<div class="heat-cell ' + cls + '"><div class="hn">' + esc(p.name) + '</div><div class="hv">' + label + ' · ' + avgText + '</div><div class="hc">出现 ' + p.count + ' 次</div></div>';
+  }).join('');
+  return legend + '<div class="heatmap-grid">' + cells + '</div>';
+}
+
+/* ============================================================
+   功能：AI智能建议（规则化引擎）
+   ============================================================ */
+function aiSuggestions(report){
+  const { stats, weak, strong, pointList, weakAdvice, pointAdvice } = report;
+  const suggestions = [];
+  // 知识点专项建议
+  const weakPoints = pointList.filter(p => p.avg !== null && p.avg < 3);
+  if(weakPoints.length){
+    suggestions.push({
+      type:'knowledge', icon:'📌', title:'知识点专项巩固',
+      color:'var(--danger)',
+      items: weakPoints.map(p => '「' + p.name + '」当前掌握度 ' + p.avg.toFixed(1) + '/5，建议：每天安排 10-15 分钟专项练习，先回顾课本例题，再做 3-5 道同类题，连续练习 3 天后重新测评。')
+    });
+  }
+  // 薄弱学科建议
+  if(weak.length){
+    suggestions.push({
+      type:'subject', icon:'📚', title:'薄弱学科提升',
+      color:'var(--accent)',
+      items: weak.map(p => {
+        const sub = subjectOf(p.key);
+        const rate = Math.round(p.rate*100);
+        return sub.name + '完成率 ' + rate + '%，建议：① 每天优先安排该科目作业；② 建立错题本，每周复盘一次；③ 遇到不懂的知识点及时请教老师，不要积压。';
+      })
+    });
+  }
+  // 学习习惯建议
+  if(stats.onTimeRate < 0.7){
+    suggestions.push({
+      type:'habit', icon:'⏰', title:'学习习惯优化',
+      color:'var(--primary)',
+      items: ['作业按时完成率 ' + Math.round(stats.onTimeRate*100) + '%，建议使用番茄工作法：每 25 分钟专注学习 + 5 分钟休息，每天固定时间段完成作业，培养时间管理意识。']
+    });
+  }
+  // 优势保持建议
+  if(strong.length){
+    suggestions.push({
+      type:'strength', icon:'🌟', title:'优势学科拓展',
+      color:'var(--success)',
+      items: strong.map(p => subjectOf(p.key).name + '表现优秀，建议适当增加拓展性、开放性作业，挑战更高难度题目，保持学习兴趣和优势。')
+    });
+  }
+  // 综合建议
+  suggestions.push({
+    type:'general', icon:'💡', title:'综合学习建议',
+    color:'#7048E8',
+    items: [
+      weakPoints.length ? '本周重点攻克 ' + weakPoints.slice(0,3).map(p=>p.name).join('、') + '，建议家长协同督促。' : '本周知识点掌握整体平稳，建议保持练习节奏，通过错题复盘持续巩固。',
+      '建议每周日晚上进行一次周复盘，整理本周错题，规划下周学习重点。'
+    ]
+  });
+  return suggestions;
+}
+
+/* ============================================================
+   视图：错题本
+   ============================================================ */
+let mistakeFilter = { student:'all', subject:'all', showReviewed:true };
+function renderMistakes(){
+  const allWrong = state.homeworks.filter(h => h.wrong);
+  const filtered = allWrong.filter(h => {
+    if(mistakeFilter.student !== 'all' && h.studentId !== mistakeFilter.student) return false;
+    if(mistakeFilter.subject !== 'all' && h.subject !== mistakeFilter.subject) return false;
+    if(!mistakeFilter.showReviewed && h.reviewed) return false;
+    return true;
+  });
+  const total = allWrong.length;
+  const reviewed = allWrong.filter(h => h.reviewed).length;
+  const pending = total - reviewed;
+  const bySubject = {};
+  allWrong.forEach(h => { if(!bySubject[h.subject]) bySubject[h.subject] = 0; bySubject[h.subject]++; });
+  const topSubject = Object.entries(bySubject).sort((a,b)=>b[1]-a[1])[0];
+
+  const studentOpts = '<option value="all">全部学生</option>' + state.students.map(s => '<option value="' + s.id + '"' + (mistakeFilter.student===s.id?' selected':'') + '>' + esc(s.name) + '</option>').join('');
+  const subjectOpts = '<option value="all">全部科目</option>' + SUBJECTS.map(s => '<option value="' + s.key + '"' + (mistakeFilter.subject===s.key?' selected':'') + '>' + s.name + '</option>').join('');
+
+  let listHtml = '';
+  if(filtered.length){
+    listHtml = filtered.map(h => {
+      const s = getStudent(h.studentId);
+      const sub = subjectOf(h.subject);
+      return '<div class="mistake-item ' + (h.reviewed?'reviewed':'') + '">' +
+        '<div class="mi-left" style="background:' + (s?s.avatar:'#999') + '">' + (s?s.name.slice(0,1):'?') + '</div>' +
+        '<div class="mi-main">' +
+          '<div class="mi-title">' + (s?'<b>' + esc(s.name) + '</b>':'') + subjectTag(h.subject) +
+            (h.reviewed ? '<span class="tag" style="font-size:11px;color:var(--success);background:var(--success-soft)">已复习</span>' : '<span class="tag" style="font-size:11px;color:var(--danger);background:var(--danger-soft)">待复习</span>') +
+          '</div>' +
+          '<div class="mi-content">' + esc(h.content) + '</div>' +
+          (h.wrongNote ? '<div class="mi-content" style="color:var(--danger);font-size:12.5px">错误说明：' + esc(h.wrongNote) + '</div>' : '') +
+          '<div class="mi-meta">' +
+            (h.knowledge ? '<span>知识点：' + esc(h.knowledge) + '</span>' : '') +
+            '<span>布置：' + fmtShort(h.assignedDate) + '</span>' +
+            (h.mastery ? '<span>掌握：' + MASTERY_TXT[h.mastery] + '</span>' : '') +
+          '</div>' +
+        '</div>' +
+        '<div class="mi-ops">' +
+          '<button class="icon-btn" title="' + (h.reviewed?'取消复习标记':'标记已复习') + '" onclick="markReviewed(\'' + h.id + '\');renderMistakes()">' + IC.check + '</button>' +
+          '<button class="icon-btn" title="查看学生详情" onclick="navigate(\'student\',{id:\'' + h.studentId + '\'})">' + IC.eye + '</button>' +
+          '<button class="icon-btn" title="取消错误标记" onclick="toggleWrong(\'' + h.id + '\');renderMistakes()">' + IC.trash + '</button>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+  } else {
+    listHtml = emptyHtml('trash', total ? '没有符合筛选条件的错题' : '还没有错题记录', total ? '调整筛选条件试试' : '在学生详情页点击作业的垃圾桶图标标记错误，错题会自动收录到这里');
+  }
+
+  $('#view-root').innerHTML =
+    '<div class="page-title"><div><h1>错题本</h1><div class="sub">自动收录标记错误的作业，支持复习管理</div></div>' +
+      '<div class="actions"><button class="btn btn-ghost btn-sm" onclick="mistakeFilter.showReviewed=!mistakeFilter.showReviewed;renderMistakes()">' + (mistakeFilter.showReviewed?'隐藏已复习':'显示全部') + '</button></div></div>' +
+    '<div class="mistake-stat-grid">' +
+      '<div class="mistake-stat"><b style="color:var(--danger)">' + total + '</b><span>错题总数</span></div>' +
+      '<div class="mistake-stat"><b style="color:var(--accent)">' + pending + '</b><span>待复习</span></div>' +
+      '<div class="mistake-stat"><b style="color:var(--success)">' + reviewed + '</b><span>已复习</span></div>' +
+      '<div class="mistake-stat"><b style="color:var(--primary)">' + (topSubject?subjectOf(topSubject[0]).name:'—') + '</b><span>错题最多科目</span></div>' +
+    '</div>' +
+    '<div class="mistake-filter">' +
+      '<select onchange="mistakeFilter.student=this.value;renderMistakes()">' + studentOpts + '</select>' +
+      '<select onchange="mistakeFilter.subject=this.value;renderMistakes()">' + subjectOpts + '</select>' +
+      '<span class="hint" style="font-size:12.5px">共 ' + filtered.length + ' 条记录</span>' +
+    '</div>' +
+    listHtml;
+}
+
+/* ============================================================
+   视图：每周成长简报
+   ============================================================ */
+let briefingStudentId = null;
+let briefingOffset = 0;
+function renderBriefing(){
+  if(!state.students.length){
+    $('#view-root').innerHTML = '<div class="page-title"><div><h1>每周成长简报</h1><div class="sub">学生一周学习成长综合报告</div></div></div><div class="card">' + emptyHtml('chart', '暂无学生数据', '请先添加学生并登记作业') + '</div>';
+    return;
+  }
+  if(!briefingStudentId || !getStudent(briefingStudentId)) briefingStudentId = state.students[0].id;
+  const s = getStudent(briefingStudentId);
+  const start = mondayOf(new Date()); start.setDate(start.getDate() + briefingOffset*7);
+  const r = generateReport(briefingStudentId, start);
+  const st = r.stats;
+  const suggestions = aiSuggestions(r);
+
+  const studentOpts = state.students.map(x => '<option value="' + x.id + '"' + (x.id===briefingStudentId?' selected':'') + '>' + esc(x.name) + '（' + esc(x.grade + x.className) + '）</option>').join('');
+
+  // 成长亮点
+  const highlights = [];
+  if(st.rate >= 0.8) highlights.push({icon:'🎉', text:'本周作业完成率达 ' + Math.round(st.rate*100) + '%，学习态度认真，表现优秀！'});
+  if(st.onTimeRate >= 0.8) highlights.push({icon:'⏰', text:'按时完成率 ' + Math.round(st.onTimeRate*100) + '%，时间管理习惯良好，能够按计划完成作业。'});
+  if(st.masteryAvg !== null && st.masteryAvg >= 4) highlights.push({icon:'⭐', text:'知识掌握平均 ' + st.masteryAvg.toFixed(1) + '/5，整体掌握扎实，作业质量稳定。'});
+  r.strong.forEach(p => highlights.push({icon:'📈', text:subjectOf(p.key).name + '学科表现突出，完成率 ' + Math.round(p.rate*100) + '%，继续保持！'}));
+  const strongPoints = r.pointList.filter(p => p.avg !== null && p.avg >= 4);
+  strongPoints.slice(0,3).forEach(p => highlights.push({icon:'✨', text:'知识点「' + p.name + '」掌握很好（' + p.avg.toFixed(1) + '/5），已形成学习优势。'}));
+
+  // 需关注
+  const concerns = [];
+  if(st.rate < 0.6) concerns.push({icon:'⚠️', text:'本周作业完成率仅 ' + Math.round(st.rate*100) + '%，有较多作业未完成，需要重点关注。'});
+  if(st.onTimeRate < 0.6) concerns.push({icon:'⏳', text:'按时完成率偏低（' + Math.round(st.onTimeRate*100) + '%），存在拖延情况，建议加强时间管理。'});
+  r.weak.forEach(p => concerns.push({icon:'📉', text:subjectOf(p.key).name + '学科完成率 ' + Math.round(p.rate*100) + '%，掌握度偏低，建议重点辅导。'}));
+  const weakPts = r.pointList.filter(p => p.avg !== null && p.avg < 3);
+  weakPts.slice(0,3).forEach(p => concerns.push({icon:'🔴', text:'知识点「' + p.name + '」掌握薄弱（' + p.avg.toFixed(1) + '/5），需专项巩固。'}));
+  if(st.wrongCount > 0) concerns.push({icon:'❌', text:'本周有 ' + st.wrongCount + ' 项作业标记错误，其中 ' + (st.wrongCount - st.wrongReviewed) + ' 项待复习订正。'});
+
+  const suggestionsHtml = suggestions.map(sg =>
+    '<div class="briefing-section"><h3><span class="gi-ic" style="background:var(--surface-2);border-radius:8px;padding:4px 8px;font-size:16px">' + sg.icon + '</span> ' + sg.title + '</h3>' +
+      sg.items.map(item => '<div class="growth-item"><div class="gi-ic" style="background:' + sg.color + '22;color:' + sg.color + '">•</div><div style="font-size:13.5px;line-height:1.7;color:var(--ink-1)">' + item + '</div></div>').join('') +
+    '</div>'
+  ).join('');
+
+  $('#view-root').innerHTML =
+    '<div class="page-title no-print"><div><h1>每周成长简报</h1><div class="sub">学生一周学习成长综合报告 · 可打印分享</div></div>' +
+      '<div class="actions"><button class="btn btn-ghost btn-sm" onclick="window.print()">' + IC.print + ' 打印 / 存PDF</button></div></div>' +
+    '<div class="analysis-picker no-print">' +
+      '<label style="margin:0;white-space:nowrap">选择学生</label>' +
+      '<select onchange="briefingStudentId=this.value;renderBriefing()">' + studentOpts + '</select>' +
+      '<button class="icon-btn" onclick="briefingOffset++;renderBriefing()">' + IC.chevL + '</button>' +
+      '<b style="white-space:nowrap;font-size:13px">' + weekLabel(start) + '</b>' +
+      '<button class="icon-btn" onclick="briefingOffset--;renderBriefing()">' + IC.chevR + '</button>' +
+    '</div>' +
+    '<div class="briefing-hero">' +
+      '<h2>' + esc(s.name) + ' 的每周成长简报</h2>' +
+      '<p>' + esc(s.grade + s.className) + ' · ' + r.weekLabel + ' · 综合评分 ' + r.score + ' 分（' + r.grade + ' ' + r.gradeTxt + '）</p>' +
+      '<div class="briefing-stats">' +
+        '<div class="bs"><b>' + st.done + '/' + st.total + '</b><span>作业完成</span></div>' +
+        '<div class="bs"><b>' + Math.round(st.rate*100) + '%</b><span>完成率</span></div>' +
+        '<div class="bs"><b>' + Math.round(st.onTimeRate*100) + '%</b><span>按时完成</span></div>' +
+        '<div class="bs"><b>' + (st.masteryAvg!==null?st.masteryAvg.toFixed(1):'—') + '</b><span>平均掌握</span></div>' +
+        '<div class="bs"><b>' + st.wrongCount + '</b><span>错题数</span></div>' +
+      '</div>' +
+    '</div>' +
+    (highlights.length ? '<div class="briefing-section"><h3>🌟 本周成长亮点</h3>' + highlights.map(h => '<div class="growth-item"><div class="gi-ic" style="background:var(--success-soft);color:var(--success)">✓</div><div style="font-size:13.5px;line-height:1.7">' + h.text + '</div></div>').join('') + '</div>' : '') +
+    (concerns.length ? '<div class="briefing-section"><h3>⚠️ 需关注与改进</h3>' + concerns.map(c => '<div class="growth-item"><div class="gi-ic" style="background:var(--danger-soft);color:var(--danger)">!</div><div style="font-size:13.5px;line-height:1.7">' + c.text + '</div></div>').join('') + '</div>' : '') +
+    '<div class="briefing-section"><h3>📊 学科表现</h3>' +
+      (st.perSubject.length ? st.perSubject.map(p => {
+        const col = subjectOf(p.key).color;
+        const pct = Math.round(p.rate*100);
+        return '<div class="subject-row">' + subjectTag(p.key) + '<div class="bar"><i style="width:' + pct + '%;background:' + col + '"></i></div><div class="val">' + pct + '%' + (p.wrong?' · '+p.wrong+'错题':'') + '</div></div>';
+      }).join('') : '<div class="hint" style="color:var(--ink-3)">本周暂无作业数据</div>') +
+    '</div>' +
+    '<div class="briefing-section"><h3>🔥 知识点掌握热力图</h3>' + heatmapHtml(r.pointList) + '</div>' +
+    suggestionsHtml +
+    '<div class="briefing-section" style="text-align:center;background:linear-gradient(135deg,var(--primary-soft),#fff);border-color:var(--primary)">' +
+      '<h3 style="justify-content:center">💌 给家长的话</h3>' +
+      '<p style="font-size:14px;line-height:1.9;color:var(--ink-1);max-width:560px;margin:0 auto">' +
+        '感谢您对 ' + esc(s.name) + ' 学习的关注与支持。孩子的每一点进步都离不开家庭的配合。' +
+        (concerns.length ? '本周有几个需要关注的地方，建议您在家中协助督促，我们一起帮助孩子进步。' : '本周孩子表现优秀，建议给予鼓励和肯定，继续保持良好的学习习惯。') +
+        '如有任何疑问，欢迎随时与我沟通。' +
+      '</p>' +
+      '<p style="margin-top:14px;font-size:13px;color:var(--ink-3)">—— 刘老师高效学习托管工作室</p>' +
+    '</div>';
+}
+
+/* ============================================================
+   功能：每日反馈选择器（侧边栏入口）
+   ============================================================ */
+function openDailyFeedbackPicker(){
+  if(!state.students.length){ toast('请先添加学生'); return; }
+  openModal(
+    '<div class="modal-head"><h3>选择学生生成每日反馈</h3><button class="modal-close" onclick="closeModal()">' + IC.close + '</button></div>' +
+    '<div class="todo-list">' + state.students.map(s =>
+      '<button class="todo-item" style="width:100%;text-align:left;cursor:pointer" onclick="closeModal();setTimeout(()=>openDailyFeedback(\'' + s.id + '\'),100)"><div style="display:flex;align-items:center;gap:12px">' + avatarHtml(s, 40) + '<div><b>' + esc(s.name) + '</b><div class="hint" style="font-size:12px;color:var(--ink-3)">' + esc(s.grade + s.className) + '</div></div></div></button>'
+    ).join('') + '</div>'
+  );
+}
+
+/* ============================================================
+   视图：知识点热力图（独立页）
+   ============================================================ */
+let heatmapStudentId = null;
+let heatmapOffset = 0;
+function renderHeatmap(){
+  if(!state.students.length){
+    $('#view-root').innerHTML = '<div class="page-title"><div><h1>知识点热力图</h1><div class="sub">知识点掌握程度可视化</div></div></div><div class="card">' + emptyHtml('spark', '暂无学生数据', '请先添加学生并登记作业') + '</div>';
+    return;
+  }
+  if(!heatmapStudentId || !getStudent(heatmapStudentId)) heatmapStudentId = state.students[0].id;
+  const s = getStudent(heatmapStudentId);
+  const start = mondayOf(new Date()); start.setDate(start.getDate() + heatmapOffset*7);
+  const r = generateReport(heatmapStudentId, start);
+
+  const studentOpts = state.students.map(x => '<option value="' + x.id + '"' + (x.id===heatmapStudentId?' selected':'') + '>' + esc(x.name) + '（' + esc(x.grade + x.className) + '）</option>').join('');
+
+  // 按掌握度排序
+  const sortedPoints = [...r.pointList].sort((a,b) => {
+    const av = a.avg === null ? -1 : a.avg;
+    const bv = b.avg === null ? -1 : b.avg;
+    return bv - av;
+  });
+
+  $('#view-root').innerHTML =
+    '<div class="page-title"><div><h1>知识点热力图</h1><div class="sub">' + esc(s.name) + ' · 知识点掌握程度可视化</div></div>' +
+      '<div class="actions"><button class="btn btn-ghost btn-sm" onclick="navigate(\'analysis\')">' + IC.spark + ' 查看完整分析</button></div></div>' +
+    '<div class="analysis-picker">' +
+      '<label style="margin:0;white-space:nowrap">选择学生</label>' +
+      '<select onchange="heatmapStudentId=this.value;renderHeatmap()">' + studentOpts + '</select>' +
+      '<button class="icon-btn" onclick="heatmapOffset++;renderHeatmap()">' + IC.chevL + '</button>' +
+      '<b style="white-space:nowrap;font-size:13px">' + weekLabel(start) + '</b>' +
+      '<button class="icon-btn" onclick="heatmapOffset--;renderHeatmap()">' + IC.chevR + '</button>' +
+    '</div>' +
+    '<div class="card"><div class="card-head"><h3>知识点掌握全景</h3><span class="hint">共 ' + r.pointList.length + ' 个知识点 · 按掌握度排序</span></div>' +
+      '<div class="heatmap-wrap">' + heatmapHtml(sortedPoints) + '</div>' +
+    '</div>' +
+    '<div class="card"><div class="card-head"><h3>薄弱知识点清单</h3><span class="hint">掌握度低于 3 分，需重点关注</span></div>' +
+      (r.pointList.filter(p => p.avg !== null && p.avg < 3).length ?
+        '<div class="todo-list">' + r.pointList.filter(p => p.avg !== null && p.avg < 3).sort((a,b)=>a.avg-b.avg).map(p =>
+          '<div class="todo-item"><div style="width:36px;height:36px;border-radius:10px;background:var(--danger-soft);color:var(--danger);display:flex;align-items:center;justify-content:center;font-weight:800;flex:none">' + p.avg.toFixed(1) + '</div><div class="todo-main"><div class="tm"><b>' + esc(p.name) + '</b><span class="tag" style="font-size:11px;color:var(--danger);background:var(--danger-soft)">薄弱</span></div><div class="meta">出现 ' + p.count + ' 次 · 平均掌握度 ' + p.avg.toFixed(1) + '/5</div></div></div>'
+        ).join('') + '</div>'
+        : '<div class="empty" style="padding:20px">' + IC.check + '<b>没有薄弱知识点</b><p>所有已评估知识点掌握度均在 3 分以上，继续保持！</p></div>'
+      ) +
+    '</div>';
+}
+
+/* ============================================================
+   视图：AI智能建议（独立页）
+   ============================================================ */
+let aiStudentId = null;
+let aiOffset = 0;
+function renderAISuggestions(){
+  if(!state.students.length){
+    $('#view-root').innerHTML = '<div class="page-title"><div><h1>AI智能建议</h1><div class="sub">基于作业数据的个性化辅导建议</div></div></div><div class="card">' + emptyHtml('spark', '暂无学生数据', '请先添加学生并登记作业') + '</div>';
+    return;
+  }
+  if(!aiStudentId || !getStudent(aiStudentId)) aiStudentId = state.students[0].id;
+  const s = getStudent(aiStudentId);
+  const start = mondayOf(new Date()); start.setDate(start.getDate() + aiOffset*7);
+  const r = generateReport(aiStudentId, start);
+  const suggestions = aiSuggestions(r);
+
+  const studentOpts = state.students.map(x => '<option value="' + x.id + '"' + (x.id===aiStudentId?' selected':'') + '>' + esc(x.name) + '（' + esc(x.grade + x.className) + '）</option>').join('');
+
+  $('#view-root').innerHTML =
+    '<div class="page-title"><div><h1>🤖 AI 智能建议</h1><div class="sub">' + esc(s.name) + ' · 基于作业数据的个性化辅导建议</div></div>' +
+      '<div class="actions"><button class="btn btn-ghost btn-sm" onclick="navigate(\'analysis\')">' + IC.spark + ' 查看完整分析</button></div></div>' +
+    '<div class="analysis-picker">' +
+      '<label style="margin:0;white-space:nowrap">选择学生</label>' +
+      '<select onchange="aiStudentId=this.value;renderAISuggestions()">' + studentOpts + '</select>' +
+      '<button class="icon-btn" onclick="aiOffset++;renderAISuggestions()">' + IC.chevL + '</button>' +
+      '<b style="white-space:nowrap;font-size:13px">' + weekLabel(start) + '</b>' +
+      '<button class="icon-btn" onclick="aiOffset--;renderAISuggestions()">' + IC.chevR + '</button>' +
+    '</div>' +
+    '<div class="analysis-hero" style="margin-bottom:16px">' +
+      '<div class="ah-top">' + avatarHtml(s, 48) +
+        '<div><h2>' + esc(s.name) + ' 的 AI 辅导建议</h2>' +
+        '<div class="ah-sub">综合评分 ' + r.score + ' 分 · ' + r.grade + ' ' + r.gradeTxt + ' · ' + r.weekLabel + '</div></div>' +
+        '<div class="score-big"><b>' + r.score + '</b><span>综合评分</span></div></div>' +
+      '<div class="ah-kpis">' +
+        '<div class="ah-kpi"><b>' + Math.round(r.stats.rate*100) + '%</b><span>完成率</span></div>' +
+        '<div class="ah-kpi"><b>' + Math.round(r.stats.onTimeRate*100) + '%</b><span>按时完成</span></div>' +
+        '<div class="ah-kpi"><b>' + (r.stats.masteryAvg!==null?r.stats.masteryAvg.toFixed(1):'—') + '</b><span>平均掌握</span></div>' +
+        '<div class="ah-kpi"><b>' + r.stats.wrongCount + '</b><span>错题数</span></div>' +
+      '</div></div>' +
+    suggestions.map(sg =>
+      '<div class="card" style="margin-bottom:14px"><div class="card-head"><h3><span style="font-size:20px;margin-right:6px">' + sg.icon + '</span>' + sg.title + '</h3></div>' +
+        sg.items.map(item => '<div class="advice" style="border-left-color:' + sg.color + ';margin-bottom:8px"><div style="font-size:13.5px;line-height:1.8">' + item + '</div></div>').join('') +
+      '</div>'
+    ).join('') +
+    '<div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">' +
+      '<button class="btn btn-primary" style="flex:1;min-width:160px" onclick="navigate(\'briefing\')">' + IC.chart + ' 生成每周成长简报</button>' +
+      '<button class="btn btn-ghost" style="flex:1;min-width:160px" onclick="openDailyFeedback(\'' + s.id + '\')">' + IC.doc + ' 生成每日反馈</button>' +
+    '</div>';
+}
+
+/* ============================================================
+   内容引擎：朋友圈文案生成（随机组合版）
+   ============================================================ */
+const MOMENTS_THEMES = [
+  { key:'daily', name:'日常打卡', emoji:'📝' },
+  { key:'achievement', name:'学习成果', emoji:'🏆' },
+  { key:'insight', name:'教育心得', emoji:'💡' },
+  { key:'enroll', name:'招生宣传', emoji:'🎯' },
+  { key:'holiday', name:'节日问候', emoji:'🎉' },
+  { key:'weekly', name:'周末总结', emoji:'📊' }
+];
+function rand(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+function randInt(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
+function pickStudent(){ return state.students.length ? rand(state.students) : null; }
+function pickSubject(){ return rand(['语文','数学','英语','科学','道法','美术','音乐','体育']); }
+
+// 素材池
+const M_OPENINGS = [
+  '今天又是被孩子们治愈的一天✨','托管室里的日常，简单又充实📚','放学铃响，托管时光开始⏰',
+  '有人问我托管老师每天都干啥？带你看看👀','今天的托管室，阳光正好，孩子们很认真☀️',
+  '又是元气满满的一天！孩子们加油💪','托管日常，记录每一个认真的瞬间📸','今天你家孩子在托管室表现如何？来看👇',
+  '教育就是一棵树摇动另一棵树🌳','每一个认真写作业的背影，都值得被记录📝'
+];
+const M_CLOSINGS = [
+  '🏠 刘老师高效学习托管工作室\n让每个孩子都能高效完成作业，快乐成长！',
+  '📌 托管名额有限，欢迎私信咨询\n🏠 刘老师高效学习托管工作室',
+  '用心陪伴，静待花开🌸\n🏠 刘老师高效学习托管工作室',
+  '好习惯贵在坚持，我们一起加油！💪\n🏠 刘老师高效学习托管工作室',
+  '你的孩子也可以这么棒！欢迎来体验😊\n🏠 刘老师高效学习托管工作室',
+  '教育无小事，事事皆育人📖\n🏠 刘老师高效学习托管工作室'
+];
+const M_QUOTES = [
+  '"教育的本质是一棵树摇动另一棵树，一朵云推动另一朵云。"',
+  '"好习惯是孩子一生的财富。"','"每天进步一点点，坚持带来大改变。"',
+  '"授人以鱼不如授人以渔。"','"教育不是注满一桶水，而是点燃一把火。"',
+  '"你今天的努力，是幸运的伏笔。"','"学习没有捷径，但有方法。"',
+  '"每个孩子都是一颗花的种子，花期不同。"'
+];
+const M_HASHTAG_POOLS = {
+  daily: ['#托管日常','#作业辅导','#高效学习','#课后托管','#认真的孩子最可爱','#托管老师','#放学后','#学习打卡'],
+  achievement: ['#学习进步','#好习惯养成','#作业效率','#托管效果','#课后辅导','#进步看得见','#学习之星'],
+  insight: ['#教育心得','#作业磨蹭','#学习习惯','#育儿分享','#高效学习','#家庭教育','#学习方法'],
+  enroll: ['#托管招生','#课后托管','#作业辅导','#学习习惯培养','#名额有限','#托管班','#欢迎咨询'],
+  holiday: ['#节日祝福','#快乐成长','#托管工作室','#阅读习惯','#用心陪伴','#节日快乐'],
+  weekly: ['#周末总结','#学习周报','#托管日常','#错题复习','#每周进步','#复盘','#新的一周']
+};
+
+function genTags(theme, n){
+  const pool = M_HASHTAG_POOLS[theme] || M_HASHTAG_POOLS.daily;
+  const shuffled = [...pool].sort(()=>Math.random()-0.5);
+  return shuffled.slice(0, n).join(' ');
+}
+
+function generateMoments(theme){
+  const now = new Date();
+  const weekday = ['日','一','二','三','四','五','六'][now.getDay()];
+  const dateStr = now.getMonth()+1 + '月' + now.getDate() + '日 周' + weekday;
+  const totalStudents = state.students.length;
+  const weekStart = mondayOf(now);
+  const allStats = allWeekStats(weekStart);
+  const weekTotal = allStats.reduce((a,b)=>a+b.stats.total,0);
+  const weekDone = allStats.reduce((a,b)=>a+b.stats.done,0);
+  const weekRate = weekTotal ? Math.round(weekDone/weekTotal*100) : 0;
+  const copies = [];
+  const themes = theme === 'all' ? ['daily','achievement','insight','enroll','holiday','weekly'] : [theme];
+
+  themes.forEach(th => {
+    const st = pickStudent();
+    const subj = pickSubject();
+
+    if(th === 'daily'){
+      // 模板1：日常打卡
+      copies.push({
+        tag:'日常打卡', title: rand(['托管日常 · 认真的孩子最可爱','今日托管实录','放学后的托管时光','认真写作业的孩子们']),
+        body: rand(M_OPENINGS) + '\n\n' +
+          '今天托管室来了 ' + totalStudents + ' 个孩子\n' +
+          '放下书包就开始认真写作业✍️\n\n' +
+          '✅ ' + pickSubject() + '作业一笔一划，书写工整\n' +
+          '✅ ' + pickSubject() + '计算仔细验算，准确率高\n' +
+          '✅ ' + pickSubject() + '单词大声朗读，发音标准\n\n' +
+          (st ? '🌟 ' + st.name + '今天表现特别棒，' + randInt(15,40) + '分钟就完成了全部作业！\n\n' : '') +
+          '遇到不懂的问题主动举手，老师一一耐心解答。\n' +
+          rand(['看到孩子们一点点进步，就是我们最大的动力💪','每个认真的瞬间都值得被记录📸','努力的孩子最可爱！']),
+        tags: genTags('daily', 5)
+      });
+      // 模板2：数据播报
+      copies.push({
+        tag:'日常打卡', title: rand(['今日作业完成情况播报','本周作业数据','托管数据周报']),
+        body: '📊 ' + dateStr + ' 作业播报\n\n' +
+          '今日在托孩子 ' + totalStudents + ' 人\n' +
+          '本周累计作业 ' + weekTotal + ' 项，已完成 ' + weekDone + ' 项\n' +
+          '整体完成率 ' + weekRate + '%\n\n' +
+          (st ? '🌟 本周之星：' + st.name + '\n完成率 ' + randInt(85,100) + '%，按时完成率 ' + randInt(80,100) + '%\n继续保持！\n\n' : '') +
+          rand(M_QUOTES) + '\n\n' +
+          '每个孩子都在自己的节奏里努力着\n不攀比、不焦虑，每天进步一点点就好🌱',
+        tags: genTags('daily', 5)
+      });
+      // 模板3：温馨日常
+      copies.push({
+        tag:'日常打卡', title: rand(['托管室的温馨一刻','今天的小确幸','孩子们的笑脸']),
+        body: '☀️ ' + dateStr + '\n\n' +
+          rand(['今天托管室的氛围特别好，','放学后的托管时光总是很温馨，','今天有个小细节特别打动我，']) +
+          '\n\n' +
+          (st ? '📖 ' + st.name + '写完作业后，主动拿起课外书阅读，还跟我分享了书里的故事。\n\n' : '') +
+          '💡 有个孩子遇到难题没有放弃，自己琢磨了' + randInt(5,15) + '分钟，最后做出来了！那种成就感的笑容，真的太治愈了。\n\n' +
+          '🍎 点心时间孩子们聊起学校的趣事，欢声笑语不断。\n\n' +
+          '这就是托管的意义吧——不只是写作业，更是陪伴成长❤️',
+        tags: genTags('daily', 5)
+      });
+    }
+
+    if(th === 'achievement'){
+      copies.push({
+        tag:'学习成果', title: rand(['孩子的进步，我们看在眼里','从磨蹭到高效，他只用了这几招','进步看得见！']),
+        body: '🏆 今日分享\n\n' +
+          (st ? '有个孩子（' + st.name + '）刚来时写作业磨蹭到晚上' + randInt(8,10) + '点😮‍💨\n' : '有个孩子刚来时写作业总是磨蹭到很晚😮‍💨\n') +
+          '经过一段时间的习惯培养，现在' + randInt(6,7) + '点半就能高效完成全部作业✅\n\n' +
+          '变化来自哪里？\n' +
+          '1️⃣ 固定的学习环境和作息\n' +
+          '2️⃣ 作业优先级管理（先难后易）\n' +
+          '3️⃣ 完成后的正向反馈和鼓励\n' +
+          '4️⃣ 老师全程陪伴，及时答疑\n\n' +
+          rand(M_QUOTES) + '\n\n' +
+          '好习惯不是一天养成的，但坚持就一定会有收获💪\n你的孩子也可以！',
+        tags: genTags('achievement', 5)
+      });
+      copies.push({
+        tag:'学习成果', title: rand(['这个学科他从60分到90分','薄弱学科逆袭记','找到方法，进步飞快']),
+        body: '📈 ' + subj + '学习进步案例\n\n' +
+          (st ? st.name + '刚来的时候' + subj + '成绩不太理想，' : '有个孩子刚来的时候' + subj + '成绩不太理想，') +
+          '主要问题是：\n' +
+          '❌ 基础不扎实，概念模糊\n❌ 做题没有方法，全靠感觉\n❌ 错题不整理，一错再错\n\n' +
+          '我们这样帮他提升：\n' +
+          '✅ 每天' + randInt(10,20) + '分钟基础巩固\n' +
+          '✅ 教给' + subj + '解题方法和思路\n' +
+          '✅ 建立错题本，每周复盘\n' +
+          '✅ 鼓励式教育，建立信心\n\n' +
+          '现在' + subj + '成绩稳定在' + randInt(85,95) + '分以上，最重要的是——他开始喜欢' + subj + '了！❤️\n\n' +
+          '找对方法，每个孩子都能逆袭💪',
+        tags: genTags('achievement', 5)
+      });
+    }
+
+    if(th === 'insight'){
+      copies.push({
+        tag:'教育心得', title: rand(['为什么孩子写作业总是磨蹭？','写作业磨蹭的5个原因','孩子磨蹭不是懒，是...']),
+        body: '💡 教育心得分享\n\n' +
+          '很多家长问我：孩子在家写作业总是磨蹭，怎么办？\n\n' +
+          '其实磨蹭背后通常有这几个原因：\n' +
+          '❶ 环境干扰太多（电视、手机、玩具）\n' +
+          '❷ 不会做又不敢问，卡在那里耗时间\n' +
+          '❸ 没有时间观念，不知道"快"是什么概念\n' +
+          '❹ 写完作业还有额外任务，不如慢慢写\n' +
+          '❺ 睡眠不足，精力不够\n\n' +
+          '在托管室，我们这样解决：\n' +
+          '✅ 专属学习位，桌面只放当前作业\n' +
+          '✅ 老师巡场，有问题立刻解答\n' +
+          '✅ 用计时器培养时间感知\n' +
+          '✅ 完成后就是自由阅读时间，正向激励\n\n' +
+          rand(M_QUOTES) + '\n\n找对方法，每个孩子都能高效起来！',
+        tags: genTags('insight', 5)
+      });
+      copies.push({
+        tag:'教育心得', title: rand(['家长越催孩子越慢？真相在这里','催促是最低效的教育','别再催孩子写作业了']),
+        body: '⚠️ 家长越催，孩子越慢？\n\n' +
+          '心理学上有个现象叫"超限效应"：\n刺激过多、过强，反而会引起逆反心理。\n\n' +
+          '你越催"快点写"，孩子反而越慢——\n因为他把写作业当成了"你的事"，\n而不是自己的责任。\n\n' +
+          '试试这样做：\n' +
+          '1️⃣ 把"快点写"换成"你打算先写哪科？"（给选择权）\n' +
+          '2️⃣ 把"怎么又错了"换成"这道题你是怎么想的？"（先了解思路）\n' +
+          '3️⃣ 把"别人都写完了"换成"你比昨天快了5分钟"（和自己比）\n' +
+          '4️⃣ 制定规则，到点就收，让孩子承担自然后果\n\n' +
+          '教育是引导，不是控制。\n把责任还给孩子，他才会真正成长🌱',
+        tags: genTags('insight', 5)
+      });
+      copies.push({
+        tag:'教育心得', title: rand(['阅读比刷题更重要？','为什么我建议孩子每天阅读30分钟','阅读的力量']),
+        body: '📚 为什么我建议孩子每天阅读30分钟？\n\n' +
+          '很多家长觉得阅读是"浪费时间"，\n不如多做几道题。但实际上——\n\n' +
+          '阅读的好处远超你的想象：\n' +
+          '📖 提升阅读理解能力（语文英语都受益）\n' +
+          '🧠 培养专注力和深度思考能力\n' +
+          '✍️ 积累素材，写作不再无话可说\n' +
+          '💡 拓宽知识面，各科都有帮助\n' +
+          '😊 缓解学习压力，培养终身学习习惯\n\n' +
+          '在托管室，作业完成后就是自由阅读时间📖\n' +
+          '孩子们从"坐不住"到"舍不得放下书"，\n变化真的肉眼可见！\n\n' +
+          rand(M_QUOTES) + '\n\n今天，你和孩子一起阅读了吗？',
+        tags: genTags('insight', 5)
+      });
+    }
+
+    if(th === 'enroll'){
+      copies.push({
+        tag:'招生宣传', title: rand(['托管名额开放中','秋季托管招生开始啦','为什么选择我们托管？']),
+        body: '🎯 刘老师高效学习托管工作室\n' +
+          rand(['秋季','春季','新学期']) + '托管名额开放中！\n\n' +
+          '我们提供：\n' +
+          '📝 作业全程辅导，当天问题当天解决\n' +
+          '📊 每日作业打卡，家长实时了解进度\n' +
+          '📚 完成后自由阅读，培养阅读习惯\n' +
+          '🤖 AI作业分析，知识点掌握一目了然\n' +
+          '📈 每周成长报告，看得见的进步\n' +
+          '🍎 温馨点心，营养补充\n' +
+          '👨‍🏫 小班教学，每个孩子都被关注\n\n' +
+          '现在报名可享：\n' +
+          '🎁 ' + rand(['免费体验一周','首月9折优惠','赠送学习大礼包',' sibling discount']) + '\n\n' +
+          '名额有限，欢迎私信预约参观体验😊\n\n📍 刘老师高效学习托管工作室\n让孩子高效学习，让家长安心放心',
+        tags: genTags('enroll', 5)
+      });
+      copies.push({
+        tag:'招生宣传', title: rand(['还在为孩子放学后没人管发愁？','双职工家庭的福音','托管，不只是看孩子']),
+        body: '👨‍👩‍👧 还在为这些问题发愁吗？\n\n' +
+          '😰 下班晚，孩子放学后没人接\n' +
+          '😰 老人管不住，孩子在家看电视玩手机\n' +
+          '😰 辅导作业鸡飞狗跳，亲子关系紧张\n' +
+          '😰 孩子写作业磨蹭，每天熬到很晚\n' +
+          '😰 错题没人讲，学习漏洞越积越多\n\n' +
+          '👉 交给刘老师高效学习托管工作室！\n\n' +
+          '✅ 安全接校，家长放心\n' +
+          '✅ 专业辅导，作业高效完成\n' +
+          '✅ 错题精讲，知识点不留漏洞\n' +
+          '✅ 阅读拓展，培养学习兴趣\n' +
+          '✅ 每日反馈，家长随时了解情况\n\n' +
+          '我们不只是"看孩子"，更是培养孩子高效学习的习惯和能力！\n\n' +
+          '📌 名额有限，私信预约体验\n🏠 刘老师高效学习托管工作室',
+        tags: genTags('enroll', 5)
+      });
+    }
+
+    if(th === 'holiday'){
+      copies.push({
+        tag:'节日问候', title: rand(['节日祝福','节日快乐','送给所有大朋友小朋友']),
+        body: '🎉 ' + dateStr + '\n\n' +
+          '在这个美好的日子里，\n刘老师高效学习托管工作室\n祝所有大朋友小朋友节日快乐！🎊\n\n' +
+          '愿每个孩子都能：\n' +
+          '📚 学习进步，天天向上\n' +
+          '😊 开心快乐，健康成长\n' +
+          '💪 自信勇敢，追逐梦想\n' +
+          '❤️ 被爱包围，温暖前行\n' +
+          '🌟 眼里有光，心中有爱\n\n' +
+          rand(['假期也别忘了每天阅读半小时哦📖','劳逸结合，学玩两不误！','好的休息是为了更好地出发～']) +
+          '\n好习惯贵在坚持！\n\n' +
+          '🏠 刘老师高效学习托管工作室\n用心陪伴每个孩子成长',
+        tags: genTags('holiday', 5)
+      });
+    }
+
+    if(th === 'weekly'){
+      copies.push({
+        tag:'周末总结', title: rand(['本周学习总结','一周回顾','孩子们这周都很棒！']),
+        body: '📊 本周学习总结\n' + dateStr + '\n\n' +
+          '本周在托孩子 ' + totalStudents + ' 人\n' +
+          '累计作业 ' + weekTotal + ' 项，完成 ' + weekDone + ' 项\n' +
+          '整体完成率 ' + weekRate + '%\n\n' +
+          (st ? '🌟 本周表现突出：' + st.name + '\n完成率 ' + randInt(90,100) + '%，继续保持！\n' : '') +
+          '\n孩子们这周都很棒！\n' +
+          rand(['从刚开学的不适应，到现在能主动安排作业顺序，进步肉眼可见👏','越来越多的孩子开始主动提问、主动阅读，学习氛围越来越好！','这周好几个孩子突破了自己的"最快完成记录"，太厉害了！']) +
+          '\n\n周末建议：\n' +
+          '1️⃣ 适当放松，多户外活动\n' +
+          '2️⃣ 每天保持' + randInt(20,40) + '分钟阅读\n' +
+          '3️⃣ 整理本周错题，复习薄弱知识点\n' +
+          '4️⃣ 早点休息，迎接新的一周\n\n' +
+          '我们下周见！💪\n\n🏠 刘老师高效学习托管工作室',
+        tags: genTags('weekly', 5)
+      });
+    }
+  });
+
+  // 随机打乱顺序
+  return copies.sort(()=>Math.random()-0.5);
+}
+
+/* ============================================================
+   视图：朋友圈文案
+   ============================================================ */
+let momentsTheme = 'all';
+function renderMoments(){
+  const now = new Date();
+  const themeOpts = '<option value="all">全部主题</option>' + MOMENTS_THEMES.map(t => '<option value="' + t.key + '"' + (momentsTheme===t.key?' selected':'') + '>' + t.emoji + ' ' + t.name + '</option>').join('');
+  const copies = generateMoments(momentsTheme);
+
+  $('#view-root').innerHTML =
+    '<div class="page-title"><div><h1>朋友圈文案生成</h1><div class="sub">AI智能生成托管机构朋友圈营销文案 · 一键复制</div></div>' +
+      '<div class="actions"><button class="btn btn-primary btn-sm" onclick="renderMoments()">' + IC.refresh + ' 换一批</button></div></div>' +
+    '<div class="gen-hero">' +
+      '<h2>📱 朋友圈文案库</h2>' +
+      '<p>基于真实托管数据随机生成，6大主题覆盖日常运营全场景，每次刷新都是新内容，直接复制就能发</p>' +
+      '<div class="gen-stats">' +
+        '<div class="gs"><b>' + copies.length + '</b><span>当前文案数</span></div>' +
+        '<div class="gs"><b>6</b><span>主题分类</span></div>' +
+        '<div class="gs"><b>' + state.students.length + '</b><span>在托学生</span></div>' +
+      '</div>' +
+    '</div>' +
+    '<div class="content-picker">' +
+      '<label style="margin:0;font-weight:700;font-size:13.5px">选择主题</label>' +
+      '<select onchange="momentsTheme=this.value;renderMoments()">' + themeOpts + '</select>' +
+      '<span class="hint" style="font-size:12.5px">生成 ' + copies.length + ' 条文案，点击卡片可复制</span>' +
+    '</div>' +
+    copies.map((c,i) =>
+      '<div class="content-card">' +
+        '<div class="cc-head"><span class="cc-tag">' + c.tag + '</span><span class="hint" style="font-size:11.5px">第 ' + (i+1) + ' 条</span></div>' +
+        '<div class="cc-title">' + c.title + '</div>' +
+        '<div class="moments-preview">' +
+          '<div class="mp-head"><div class="mp-avatar">刘</div><div><div class="mp-name">刘老师高效学习托管工作室</div><div class="mp-time">' + (now.getMonth()+1) + '/' + now.getDate() + ' · 刚刚</div></div></div>' +
+          '<div style="font-size:13.5px;line-height:1.9;white-space:pre-wrap;color:var(--ink-1)">' + esc(c.body) + '</div>' +
+        '</div>' +
+        '<div class="cc-meta"><span>🏷️ ' + esc(c.tags) + '</span></div>' +
+        '<div class="cc-actions">' +
+          '<button class="btn btn-primary btn-sm" style="flex:1" onclick="copyText(\'' + esc(c.body).replace(/'/g,"\\'") + '\n\n' + esc(c.tags).replace(/'/g,"\\'") + '\')">' + IC.doc + ' 复制文案</button>' +
+          '<button class="btn btn-ghost btn-sm" onclick="copyText(\'' + esc(c.title).replace(/'/g,"\\'") + '\')">复制标题</button>' +
+        '</div>' +
+      '</div>'
+    ).join('');
+}
+
+/* ============================================================
+   内容引擎：短视频选题（随机组合版）
+   ============================================================ */
+const VIDEO_CATEGORIES = [
+  { key:'tips', name:'知识干货', emoji:'📚' },
+  { key:'daily', name:'学习日常', emoji:'✏️' },
+  { key:'parenting', name:'育儿心得', emoji:'👨‍👩‍👧' },
+  { key:'showcase', name:'机构展示', emoji:'🏠' },
+  { key:'trending', name:'热点结合', emoji:'🔥' },
+  { key:'parentclass', name:'家长课堂', emoji:'🎓' }
+];
+
+// 爆款钩子素材池
+const V_HOOKS = [
+  '你家孩子是不是也这样？','90%的家长都做错了！','老师不会告诉你的秘密',
+  '看完这个，孩子写作业再也不磨蹭了','千万别再这样催孩子了！','一个方法让孩子成绩翻倍',
+  '托管老师透露的真相','家长必看，最后一条最重要','孩子成绩差？原因可能在这',
+  '我用了这招，孩子主动写作业了','别再给孩子报补习班了','这才是正确的辅导方式',
+  '3秒钟学会，受益一辈子','学霸都在用的方法','为什么别人家的孩子那么优秀？'
+];
+// 标题公式
+const V_TITLE_FORMULAS = [
+  (s)=> s + '？90%的家长都做错了',
+  (s)=> '3个方法让孩子' + s + '速度翻倍',
+  (s)=> s + '总出错？原因和对策都在这',
+  (s)=> '托管老师教你' + s + '，太实用了',
+  (s)=> '别再' + s + '了！正确做法是这样',
+  (s)=> s + '的秘密，老师不会主动说',
+  (s)=> '一招搞定' + s + '，家长必看',
+  (s)=> s + '？试试这3个方法'
+];
+const V_TIPS_POOL = [
+  '拍摄时可以展示计时器、作业清单等道具，画面要有对比感',
+  '用白板或黑板讲解，重点内容用彩色笔标注',
+  '快剪+实时画面结合，配乐轻快，节奏紧凑',
+  '用情景再现方式拍摄，对比错误做法和正确做法',
+  '一镜到底或快剪方式，画面明亮整洁，重点突出学习氛围',
+  '结合热点元素，画面要有开学/节日等应景元素',
+  '用对比手法展示前后变化，结尾强调核心观点',
+  '实拍孩子做题过程（经家长同意），真实感更强',
+  '口播+字幕+画面演示三结合，信息密度高',
+  '开头3秒必须有冲突或悬念，留住观众'
+];
+const V_TAGS_POOL = {
+  tips: ['#学习方法','#高效学习','#作业辅导','#育儿干货','#知识分享','#学习技巧','#学霸方法','#家庭教育'],
+  daily: ['#托管日常','#托管老师','#课后托管','#作业辅导','#老师的一天','#学习日常','#真实记录'],
+  parenting: ['#育儿心得','#家庭教育','#亲子关系','#不吼不叫','#陪写作业','#育儿沟通','#父母必看'],
+  showcase: ['#托管班','#机构展示','#课后托管','#学习环境','#托管参观','#教育机构','#欢迎咨询'],
+  trending: ['#开学季','#热点','#收心计划','#新学期','#教育热点','#家长必看','#学习习惯'],
+  parentclass: ['#家长课堂','#检查作业','#学习方法','#错题本','#育儿知识','#父母必看','#教育理念']
+};
+function vTags(cat, n){
+  const pool = V_TAGS_POOL[cat] || V_TAGS_POOL.tips;
+  return [...pool].sort(()=>Math.random()-0.5).slice(0,n).join(' ');
+}
+
+function generateVideoTopics(category){
+  const topics = [];
+  const cats = category === 'all' ? ['tips','daily','parenting','showcase','trending','parentclass'] : [category];
+  const subj = pickSubject();
+
+  cats.forEach(cat => {
+    if(cat === 'tips'){
+      const tipsSubjects = ['写作业','数学计算','英语单词','语文阅读','背诵课文','预习复习','考试复习','课堂笔记'];
+      const ts = rand(tipsSubjects);
+      topics.push({
+        cat:'知识干货', title: rand(V_TITLE_FORMULAS)(ts),
+        hook: rand(V_HOOKS),
+        outline: [
+          '1. 痛点引入：' + ts + '时常见的' + rand(['3','4','5']) + '个问题',
+          '2. 方法一：' + rand(['优先级管理法','番茄工作法','费曼学习法','艾宾浩斯复习法','思维导图法']) + '——具体操作步骤',
+          '3. 方法二：' + rand(['错题复盘法','限时训练法','同伴互教法','口诀记忆法','情境联想法']) + '——实操演示',
+          '4. 方法三：' + rand(['正向激励法','环境优化法','目标拆解法','习惯打卡法','复盘总结法']) + '——坚持技巧',
+          '5. 总结：方法贵在坚持，每天' + randInt(10,30) + '分钟见效'
+        ],
+        tips: rand(V_TIPS_POOL), tags: vTags('tips',5)
+      });
+      topics.push({
+        cat:'知识干货', title: subj + rand(['学习的5个误区','提分的3个关键','学霸都在用的方法','成绩差的根本原因']),
+        hook: rand(V_HOOKS),
+        outline: [
+          '1. 常见误区：' + rand(['盲目刷题不总结','死记硬背不理解','只看不动手','熬夜学习效率低']),
+          '2. 正确方法一：建立' + subj + '知识体系，用思维导图串联知识点',
+          '3. 正确方法二：' + subj + '错题本的正确使用方法（不是抄题，是分析）',
+          '4. 正确方法三：' + randInt(3,5) + '步解题法，从读题到验算',
+          '5. 每日训练计划：' + randInt(15,30) + '分钟基础+错题复盘'
+        ],
+        tips: rand(V_TIPS_POOL), tags: vTags('tips',5)
+      });
+      topics.push({
+        cat:'知识干货', title: '孩子' + rand(['注意力不集中','记忆力差','粗心大意','拖延症']) + '？这样训练最有效',
+        hook: rand(V_HOOKS),
+        outline: [
+          '1. 原因分析：生理因素+环境因素+习惯因素',
+          '2. 训练方法一：' + rand(['舒尔特方格','听觉专注训练','视觉追踪训练','冥想呼吸法']) + '，每天5分钟',
+          '3. 训练方法二：' + rand(['番茄工作法','任务拆解法','游戏化训练','奖励机制']) + '，循序渐进',
+          '4. 环境优化：学习区的' + randInt(3,5) + '个布置要点',
+          '5. 家长配合：' + rand(['不打断','不催促','多鼓励','以身作则']) + '的重要性'
+        ],
+        tips: rand(V_TIPS_POOL), tags: vTags('tips',5)
+      });
+    }
+
+    if(cat === 'daily'){
+      topics.push({
+        cat:'学习日常', title: rand(['托管老师的一天：从接校到全部完成','带你看托管室的真实一天','托管老师Vlog']),
+        hook: rand(V_HOOKS),
+        outline: [
+          '1. 放学前：准备学习环境，确认今日作业清单',
+          '2. 接校时段：安全接到每个孩子，路上聊聊学校趣事',
+          '3. 点心时间：营养补充，短暂放松，调整状态',
+          '4. 作业时段：巡场辅导，及时答疑，拍照打卡发给家长',
+          '5. 完成后：自由阅读，错题讲解，等家长接回',
+          '6. 收尾：整理教室，准备第二天'
+        ],
+        tips: rand(V_TIPS_POOL), tags: vTags('daily',5)
+      });
+      topics.push({
+        cat:'学习日常', title: rand(['托管室的' + randInt(1,24) + '小时','一个孩子在托管室的下午','放学后的' + randInt(2,4) + '小时']),
+        hook: rand(V_HOOKS),
+        outline: [
+          '1. 进门：放书包、洗手、吃点心，仪式感很重要',
+          '2. 作业规划：和孩子一起列作业清单，排优先级',
+          '3. 专注时段：' + randInt(20,30) + '分钟专注+5分钟休息',
+          '4. 答疑时刻：孩子举手，老师一对一讲解',
+          '5. 完成检查：孩子自查→老师抽查→错题讲解',
+          '6. 自由时光：阅读、画画、和小伙伴聊天'
+        ],
+        tips: rand(V_TIPS_POOL), tags: vTags('daily',5)
+      });
+    }
+
+    if(cat === 'parenting'){
+      const parentingTopics = ['陪写作业','批评孩子','夸孩子','和孩子沟通','立规矩','处理情绪','培养自律','手机管理'];
+      const pt = rand(parentingTopics);
+      topics.push({
+        cat:'育儿心得', title: pt + '？试试这' + randInt(3,5) + '个沟通技巧',
+        hook: rand(V_HOOKS),
+        outline: [
+          '1. 错误做法：' + rand(['催促唠叨','比较指责','情绪失控','全权代劳']) + '的危害',
+          '2. 技巧一：把"命令句"换成"选择句"——给孩子选择权',
+          '3. 技巧二：把"评判句"换成"描述句"——只说事实不贴标签',
+          '4. 技巧三：把"否定句"换成"肯定句"——先肯定再引导',
+          '5. 技巧四：' + rand(['倾听技巧','共情技巧','正向反馈','自然后果']) + '——让孩子愿意听',
+          '6. 实操演示：错误说法vs正确说法对比'
+        ],
+        tips: rand(V_TIPS_POOL), tags: vTags('parenting',5)
+      });
+      topics.push({
+        cat:'育儿心得', title: rand(['孩子为什么不听话？真相扎心了','越管越叛逆？因为你踩了这个坑','好妈妈/爸爸胜过好老师']),
+        hook: rand(V_HOOKS),
+        outline: [
+          '1. 现象：孩子越来越不听话，说什么都对着干',
+          '2. 原因一：家长说的太多，孩子自动屏蔽',
+          '3. 原因二：家长只看结果不看过程，孩子觉得不被理解',
+          '4. 原因三：家长双重标准，自己做不到却要求孩子',
+          '5. 解决方法：' + rand(['少说多做','以身作则','倾听共情','给孩子空间']) + '，用行动影响孩子',
+          '6. 总结：教育是影响，不是控制'
+        ],
+        tips: rand(V_TIPS_POOL), tags: vTags('parenting',5)
+      });
+    }
+
+    if(cat === 'showcase'){
+      topics.push({
+        cat:'机构展示', title: rand(['带你参观刘老师托管工作室','一家好的托管班长什么样？','30秒了解我们托管班']),
+        hook: rand(V_HOOKS),
+        outline: [
+          '1. 环境展示：专属学习位、阅读角、点心区、活动区',
+          '2. 流程展示：接校→点心→作业规划→专注学习→答疑→阅读→接回',
+          '3. 特色展示：AI作业分析系统、每日打卡、每周成长报告、错题本',
+          '4. 师资展示：老师资质、教学经验、教育理念',
+          '5. 效果展示：学生进步案例（经家长同意）、家长好评',
+          '6. 联系方式：地址、电话、预约方式'
+        ],
+        tips: rand(V_TIPS_POOL), tags: vTags('showcase',5)
+      });
+      topics.push({
+        cat:'机构展示', title: rand(['为什么家长都选择我们托管？','我们和其他托管班的区别','选择托管班的' + randInt(3,5) + '个标准']),
+        hook: rand(V_HOOKS),
+        outline: [
+          '1. 标准一：看环境——是否有专属学习位，桌面是否整洁',
+          '2. 标准二：看师资——老师是否专业，是否有辅导经验',
+          '3. 标准三：看流程——是否有规范的作业管理流程',
+          '4. 标准四：看反馈——是否每天跟家长沟通孩子情况',
+          '5. 标准五：看效果——孩子成绩和习惯是否有改善',
+          '6. 我们的优势：以上5点全部满足，欢迎来对比'
+        ],
+        tips: rand(V_TIPS_POOL), tags: vTags('showcase',5)
+      });
+    }
+
+    if(cat === 'trending'){
+      const hotTopics = ['开学季','期中考试','期末考试','寒暑假','双减政策','AI教育','育儿焦虑','教育内卷'];
+      const ht = rand(hotTopics);
+      topics.push({
+        cat:'热点结合', title: ht + '来了！家长最该做的' + randInt(3,5) + '件事',
+        hook: rand(V_HOOKS),
+        outline: [
+          '1. 现状分析：' + ht + '期间家长和孩子常见的焦虑',
+          '2. 第一件事：' + rand(['调整作息','制定计划','调整心态','梳理目标']) + '——具体怎么做',
+          '3. 第二件事：' + rand(['查漏补缺','预习新知','习惯培养','阅读积累']) + '——方法和节奏',
+          '4. 第三件事：' + rand(['亲子沟通','情绪管理','劳逸结合','奖励机制']) + '——避免冲突',
+          '5. 托管加持：专业环境+老师陪伴，比在家效率高' + randInt(2,5) + '倍',
+          '6. 总结：不焦虑、不盲从，找对方法稳步前行'
+        ],
+        tips: rand(V_TIPS_POOL), tags: vTags('trending',5)
+      });
+    }
+
+    if(cat === 'parentclass'){
+      const classTopics = ['检查作业','辅导作业','签字','和老师沟通','选补习班','买教辅','家长会','试卷分析'];
+      const ct = rand(classTopics);
+      topics.push({
+        cat:'家长课堂', title: ct + '的正确打开方式，90%家长都做错了',
+        hook: rand(V_HOOKS),
+        outline: [
+          '1. 错误做法：' + rand(['全权代劳','只看答案','签字不看','过度纠错']) + '的危害',
+          '2. 正确步骤一：先让孩子自己' + ct + '，培养责任感',
+          '3. 正确步骤二：家长' + rand(['抽查','引导','提问','复盘']) + '，重点看思路不看答案',
+          '4. 正确步骤三：错题让孩子自己订正，家长只引导不代劳',
+          '5. 正确步骤四：建立错题本，定期复盘，比做10道新题有效',
+          '6. 工具推荐：' + rand(['错题本','计时器','思维导图','学习计划表']) + '的使用方法'
+        ],
+        tips: rand(V_TIPS_POOL), tags: vTags('parentclass',5)
+      });
+      topics.push({
+        cat:'家长课堂', title: rand(['如何培养孩子的自主学习能力','从"要我学"到"我要学"','内驱力才是最好的老师']),
+        hook: rand(V_HOOKS),
+        outline: [
+          '1. 为什么孩子缺乏学习动力？——外部激励过多，内部动机不足',
+          '2. 方法一：给孩子自主权——让他自己安排学习计划',
+          '3. 方法二：建立胜任感——小目标+及时反馈，让孩子体验成功',
+          '4. 方法三：联结感——让孩子知道学习是为了自己，不是为了父母',
+          '5. 方法四：保护好奇心——鼓励提问，不急于给答案',
+          '6. 家长避坑：' + rand(['不攀比','不物质奖励','不贴标签','不过度干预']) + '的重要性'
+        ],
+        tips: rand(V_TIPS_POOL), tags: vTags('parentclass',5)
+      });
+    }
+  });
+
+  return topics.sort(()=>Math.random()-0.5);
+}
+
+/* ============================================================
+   视图：短视频选题
+   ============================================================ */
+let videoCategory = 'all';
+function renderVideoTopics(){
+  const catOpts = '<option value="all">全部类别</option>' + VIDEO_CATEGORIES.map(c => '<option value="' + c.key + '"' + (videoCategory===c.key?' selected':'') + '>' + c.emoji + ' ' + c.name + '</option>').join('');
+  const topics = generateVideoTopics(videoCategory);
+
+  $('#view-root').innerHTML =
+    '<div class="page-title"><div><h1>短视频选题生成</h1><div class="sub">AI智能生成教育类短视频选题 · 含标题/脚本/拍摄建议</div></div>' +
+      '<div class="actions"><button class="btn btn-primary btn-sm" onclick="renderVideoTopics()">' + IC.refresh + ' 换一批</button></div></div>' +
+    '<div class="gen-hero" style="background:linear-gradient(135deg,#E8590C,#FF922B)">' +
+      '<h2>🎬 短视频选题库</h2>' +
+      '<p>6大类别覆盖教育类账号全场景，每次刷新随机生成新选题，含爆款标题/开头钩子/内容大纲/拍摄建议，拿到就能拍</p>' +
+      '<div class="gen-stats">' +
+        '<div class="gs"><b>' + topics.length + '</b><span>当前选题数</span></div>' +
+        '<div class="gs"><b>6</b><span>内容类别</span></div>' +
+        '<div class="gs"><b>4</b><span>维度/选题</span></div>' +
+      '</div>' +
+    '</div>' +
+    '<div class="content-picker">' +
+      '<label style="margin:0;font-weight:700;font-size:13.5px">选择类别</label>' +
+      '<select onchange="videoCategory=this.value;renderVideoTopics()">' + catOpts + '</select>' +
+      '<span class="hint" style="font-size:12.5px">生成 ' + topics.length + ' 个选题，点击可复制完整脚本</span>' +
+    '</div>' +
+    topics.map((t,i) =>
+      '<div class="content-card">' +
+        '<div class="cc-head"><span class="cc-tag" style="background:#FFF0E6;color:#E8590C">' + t.cat + '</span><span class="hint" style="font-size:11.5px">选题 ' + (i+1) + '</span></div>' +
+        '<div class="cc-title">🔥 ' + esc(t.title) + '</div>' +
+        '<div class="cc-body" style="background:var(--surface-3);border-radius:10px;padding:12px;margin-bottom:10px"><b style="color:var(--accent)">开头钩子：</b>' + esc(t.hook) + '</div>' +
+        '<div class="video-outline"><b>📝 内容大纲：</b>\n' + t.outline.map(o => esc(o)).join('\n') + '</div>' +
+        '<div class="cc-meta"><span>🎥 拍摄建议：' + esc(t.tips) + '</span></div>' +
+        '<div class="cc-meta"><span>🏷️ ' + esc(t.tags) + '</span></div>' +
+        '<div class="cc-actions">' +
+          '<button class="btn btn-primary btn-sm" style="flex:1" onclick="copyText(\'' + ('选题：' + esc(t.title) + '\\n\\n开头钩子：' + esc(t.hook) + '\\n\\n内容大纲：\\n' + t.outline.map(o=>esc(o)).join('\\n') + '\\n\\n拍摄建议：' + esc(t.tips) + '\\n\\n标签：' + esc(t.tags)).replace(/'/g,"\\'") + '\')">' + IC.doc + ' 复制完整脚本</button>' +
+          '<button class="btn btn-ghost btn-sm" onclick="copyText(\'' + esc(t.title).replace(/'/g,"\\'") + '\')">复制标题</button>' +
+        '</div>' +
+      '</div>'
+    ).join('');
+}
+
+/* ============================================================
+   实时时钟
+   ============================================================ */
+let clockTimer = null;
+function tickClock(){
+  const el = $('#lc-time');
+  const dateEl = $('#lc-date');
+  if(!el) return; // 不在首页时不更新
+  const now = new Date();
+  const h = String(now.getHours()).padStart(2,'0');
+  const m = String(now.getMinutes()).padStart(2,'0');
+  const s = String(now.getSeconds()).padStart(2,'0');
+  el.innerHTML = h + ':' + m + '<span class="sec">' + s + '</span>';
+  const weekday = ['周日','周一','周二','周三','周四','周五','周六'][now.getDay()];
+  dateEl.textContent = (now.getMonth()+1) + '月' + now.getDate() + '日 ' + weekday;
+}
+function startClock(){
+  if(clockTimer) clearInterval(clockTimer);
+  tickClock();
+  clockTimer = setInterval(tickClock, 1000);
+}
+
+/* ============================================================
+   渲染与导航激活
+   ============================================================ */
+function render(){
+  const root = $('#view-root');
+  const p = current.path;
+  if(p === 'home') renderHome();
+  else if(p === 'students') renderStudents();
+  else if(p === 'student') renderStudentDetail();
+  else if(p === 'analysis') renderAnalysis();
+  else if(p === 'heatmap') renderHeatmap();
+  else if(p === 'ai-suggest') renderAISuggestions();
+  else if(p === 'weekly') renderWeekly();
+  else if(p === 'report') renderReport();
+  else if(p === 'parent') renderParent();
+  else if(p === 'mistakes') renderMistakes();
+  else if(p === 'briefing') renderBriefing();
+  else if(p === 'moments') renderMoments();
+  else if(p === 'video-topics') renderVideoTopics();
+  else { location.hash = '#home'; return; }
+
+  $$('.nav-item').forEach(b => b.classList.toggle('active', b.dataset.route === p));
+  window.scrollTo(0, 0);
+}
+$$('.nav-item[data-route]').forEach(b => b.addEventListener('click', () => navigate(b.dataset.route)));
+$$('.nav-item[data-action]').forEach(b => b.addEventListener('click', () => {
+  const act = b.dataset.action;
+  if(act === 'add-homework') openAddHomework(null);
+  else if(act === 'add-student') openAddStudent();
+  else if(act === 'parent-view') openParentPicker();
+  else if(act === 'daily-feedback') openDailyFeedbackPicker();
+}));
+
+/* 默认进入总览，带演示数据 */
+if(!state.students.length){
+  const s1 = addStudent({ name:'李明轩', grade:'三年级', className:'1 班' });
+  const s2 = addStudent({ name:'王梓涵', grade:'三年级', className:'2 班' });
+  const s3 = addStudent({ name:'张雨桐', grade:'四年级', className:'1 班' });
+  const t = todayKey();
+  const days = [0,1,2].map(i => { const d = new Date(); d.setDate(d.getDate()-i); return toKey(d); });
+  addHomework({ studentId:s1.id, subject:'shuxue', content:'完成口算练习册第 3 页', assignedDate:days[0], knowledge:'四则运算、口算', mastery:4, status:'done', completedAt:days[0]+'T18:30:00', feedback:'口算速度有进步' });
+  addHomework({ studentId:s1.id, subject:'yuwen', content:'背诵古诗《望天门山》', assignedDate:days[1], knowledge:'古诗、背诵', mastery:3, status:'done', completedAt:days[1]+'T19:10:00' });
+  addHomework({ studentId:s1.id, subject:'yingyu', content:'听读 Unit 3 单词并抄写', assignedDate:days[2], knowledge:'单词、听力', mastery:3, status:'pending' });
+  addHomework({ studentId:s2.id, subject:'shuxue', content:'数学练习册第 12 页应用题', assignedDate:days[0], knowledge:'应用题', mastery:2, status:'done', completedAt:days[0]+'T18:00:00' });
+  addHomework({ studentId:s2.id, subject:'yingyu', content:'抄写重点句型 5 遍', assignedDate:days[1], knowledge:'句型', status:'pending' });
+  addHomework({ studentId:s2.id, subject:'kexue', content:'观察月相并记录', assignedDate:days[2], knowledge:'观察、记录', mastery:4, status:'pending' });
+  addHomework({ studentId:s3.id, subject:'yuwen', content:'阅读课外书 30 分钟并写读后感', assignedDate:days[0], knowledge:'阅读、写作', mastery:5, status:'done', completedAt:days[0]+'T20:00:00', feedback:'读后感写得很用心' });
+  addHomework({ studentId:s3.id, subject:'shuxue', content:'完成分数加减法练习', assignedDate:days[1], knowledge:'分数加减法', mastery:4, status:'done', completedAt:days[1]+'T18:40:00' });
+  addHomework({ studentId:s3.id, subject:'yingyu', content:'预习 Unit 4 课文', assignedDate:days[2], knowledge:'预习、阅读', status:'pending' });
+}
+render();
+</script>
+</body>
+</html>
+
