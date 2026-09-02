@@ -108,8 +108,8 @@ label{font-size:13px;font-weight:600;color:var(--ink-2);display:block;margin-bot
 .menu-toggle svg{width:22px;height:22px;color:var(--ink-1)}
 .menu-toggle:active{transform:scale(.94)}
 .sidebar-backdrop{
-  display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);
-  z-index:55;backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);
+  display:none;position:fixed;inset:0;background:rgba(18,28,52,.38);
+  z-index:55;backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px);
   animation:fadeIn .25s ease;
 }
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
@@ -2675,6 +2675,9 @@ if(!state.students.length){
   addHomework({ studentId:s3.id, subject:'yingyu', content:'预习 Unit 4 课文', assignedDate:days[2], knowledge:'预习、阅读', status:'pending' });
 }
 render();
+
+/* 手机端：默认展开左侧功能栏，点击功能后自动收起进入对应界面 */
+if(isMobile()) document.body.classList.add('sidebar-open');
 </script>
 </body>
 </html>
