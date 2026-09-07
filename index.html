@@ -498,6 +498,37 @@ tbody tr:hover{background:var(--surface-3)}
   .live-clock .lc-time{font-size:17px}
   .live-clock .lc-date{font-size:10px}
 }
+/* ============ 拍照识别作业（OCR） ============ */
+.ocr-entry{background:#fff;border:1.5px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px;transition:border-color .15s}
+.ocr-entry:focus-within{border-color:var(--primary)}
+.ocr-entry-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.ocr-entry-no{font-size:12px;font-weight:800;color:var(--primary);background:var(--primary-soft);padding:3px 12px;border-radius:20px}
+.ocr-entry-del{color:var(--danger);font-size:12.5px;font-weight:700;padding:5px 8px;border-radius:8px}
+.ocr-entry-del:hover{background:var(--danger-soft)}
+.ocr-entry .form-row{margin-bottom:10px}
+.ocr-preview{display:flex;gap:12px;align-items:flex-start;margin-bottom:14px}
+.ocr-preview img{width:120px;height:120px;object-fit:cover;border-radius:12px;border:1.5px solid var(--line);flex:none}
+.ocr-preview .op-info{flex:1;min-width:0}
+.ocr-progress{height:8px;background:#E9EEF8;border-radius:6px;overflow:hidden;margin:8px 0 4px}
+.ocr-progress i{display:block;height:100%;background:linear-gradient(90deg,#2F6BFF,#5C8CFF);border-radius:6px;transition:width .3s}
+.ocr-status{font-size:12.5px;color:var(--ink-3);margin-bottom:4px}
+.ocr-hint{font-size:12px;color:var(--ink-3);line-height:1.7}
+.ocr-hint b{color:var(--primary)}
+.ocr-cam-btn{
+  display:flex;align-items:center;justify-content:center;gap:10px;width:100%;
+  padding:18px;border-radius:14px;border:2px dashed var(--primary);
+  background:var(--primary-soft);color:var(--primary);font-size:14.5px;font-weight:700;
+  cursor:pointer;transition:all .15s;
+}
+.ocr-cam-btn:hover{background:#E3EBFF;border-color:var(--primary)}
+.ocr-cam-btn:active{transform:scale(.98)}
+.ocr-raw{background:var(--surface-3);border-radius:10px;padding:12px;font-size:12.5px;color:var(--ink-2);line-height:1.7;margin-top:10px;max-height:140px;overflow-y:auto}
+.ocr-empty{text-align:center;padding:26px 10px;color:var(--ink-3)}
+.ocr-empty svg{width:44px;height:44px;margin-bottom:8px;opacity:.4}
+.ocr-empty b{display:block;font-size:14.5px;color:var(--ink-2);margin-bottom:4px}
+.ocr-empty p{font-size:12.5px}
+.ocr-ops{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap}
+.ocr-ops .btn{flex:1;min-width:130px;justify-content:center}
 </style>
 </head>
 <body>
@@ -561,6 +592,7 @@ tbody tr:hover{background:var(--surface-3)}
 
 <!-- 隐藏文件输入 -->
 <input type="file" id="file-input" accept="image/*" style="display:none">
+<input type="file" id="ocr-input" accept="image/*" style="display:none">
 <input type="file" id="json-input" accept=".json,application/json" style="display:none">
 
 <script>
@@ -857,6 +889,8 @@ function openAddHomework(studentId){
     : '<div class="form-row"><label>选择学生</label><select id="f-student">' + state.students.map(s => '<option value="' + s.id + '">' + esc(s.name) + '（' + esc(s.grade + s.className) + '）</option>').join('') + '</select></div>';
   openModal(
     '<div class="modal-head"><h3>登记作业</h3><button class="modal-close" onclick="closeModal()">' + IC.close + '</button></div>' +
+    '<button class="ocr-cam-btn" style="margin-bottom:14px" onclick="openOCRPanel(' + (studentId ? "'" + studentId + "'" : 'null') + ')">' + IC.camera + ' 拍照识别作业（自动登记）</button>' +
+    '<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px"><div style="flex:1;height:1px;background:var(--line)"></div><span style="font-size:12px;color:var(--ink-3);font-weight:600">或手动登记</span><div style="flex:1;height:1px;background:var(--line)"></div></div>' +
     '<form onsubmit="submitHomework(event,' + (studentId ? "'" + studentId + "'" : 'null') + ')">' +
       students +
       '<div class="form-row"><label>科目</label><select id="f-subject" required>' + subjectOpts + '</select></div>' +
@@ -989,6 +1023,176 @@ function compressImage(file, cb){
   };
   reader.readAsDataURL(file);
 }
+
+/* ============================================================
+   拍照识别作业（OCR）
+   ============================================================ */
+let ocrStudentId = null;
+let ocrImageData = null;
+let ocrDraft = [];
+let ocrRunning = false;
+function loadTesseract(){
+  return new Promise((resolve, reject) => {
+    if(window.Tesseract){ resolve(); return; }
+    const s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js';
+    s.onload = () => resolve();
+    s.onerror = () => reject(new Error('OCR 引擎加载失败，请检查网络后重试'));
+    document.head.appendChild(s);
+  });
+}
+function openOCRPanel(studentId){
+  if(!state.students.length){ toast('请先添加学生'); return; }
+  ocrStudentId = studentId || null;
+  ocrImageData = null;
+  ocrDraft = [];
+  ocrRunning = false;
+  const stuSel = studentId ? '' : '<div class="form-row"><label>保存给哪个学生</label><select id="ocr-student">' + state.students.map(s => '<option value="' + s.id + '">' + esc(s.name) + '（' + esc(s.grade + s.className) + '）</option>').join('') + '</select></div>';
+  openModal(
+    '<div class="modal-head"><h3>📷 拍照识别作业</h3><button class="modal-close" onclick="closeModal()">' + IC.close + '</button></div>' +
+    '<div id="ocr-body">' +
+      '<button class="ocr-cam-btn" onclick="ocrSelectImage()">' + IC.camera + ' 拍摄 / 上传作业照片</button>' +
+      '<div class="ocr-hint" style="margin-top:12px">' +
+        '拍下 <b>家长登记的作业单</b> 或 <b>老师发的作业清单</b>（手写本、截图、纸质单均可），系统自动识别出里面的作业条目并帮您登记。<br/>' +
+        '<b>支持：</b>手写登记本 · 手机截图 · 纸质作业单<br/>' +
+        '<b>自动完成：</b>拆分成多条作业 · 智能识别科目 · 可修改后一键保存' +
+      '</div>' +
+      stuSel +
+    '</div>'
+  );
+}
+function ocrSelectImage(){ $('#ocr-input').click(); }
+function showOCRPreview(){
+  $('#ocr-body').innerHTML =
+    '<div class="ocr-preview">' +
+      '<img src="' + ocrImageData + '" alt="作业照片">' +
+      '<div class="op-info">' +
+        '<div class="ocr-status" id="ocr-status">准备识别…</div>' +
+        '<div class="ocr-progress"><i id="ocr-prog-i" style="width:2%"></i></div>' +
+        '<div class="ocr-hint">首次识别需下载中文语言包（约 15MB），请耐心等待；识别结果可人工确认修改后再保存。</div>' +
+      '</div>' +
+    '</div>';
+}
+async function runOCR(){
+  if(ocrRunning) return;
+  ocrRunning = true;
+  try{
+    await loadTesseract();
+    const statusEl = $('#ocr-status'), progEl = $('#ocr-prog-i');
+    const setStatus = (txt, p) => { if(statusEl) statusEl.textContent = txt; if(progEl && p !== undefined) progEl.style.width = Math.round(Math.min(1, p) * 100) + '%'; };
+    setStatus('正在加载识别引擎…', 0.05);
+    const result = await Tesseract.recognize(ocrImageData, 'chi_sim+eng', {
+      logger: m => {
+        if(m.status === 'loading tesseract core') setStatus('正在加载识别核心…', 0.05 + m.progress * 0.25);
+        else if(m.status === 'loading language traineddata') setStatus('正在下载中文语言包…（首次较慢）', 0.3 + m.progress * 0.4);
+        else if(m.status === 'initializing api') setStatus('正在初始化识别引擎…', 0.7 + m.progress * 0.1);
+        else if(m.status === 'recognizing text') setStatus('正在识别作业内容…', 0.8 + m.progress * 0.2);
+      }
+    });
+    ocrRunning = false;
+    ocrDraft = parseHomeworkText(result.data.text || '');
+    if(!ocrDraft.length){ setStatus('未识别出作业内容，请换一张清晰的照片重试', 1); return; }
+    renderOCREntries(result.data.text || '');
+  }catch(err){
+    ocrRunning = false;
+    const statusEl = $('#ocr-status');
+    if(statusEl) statusEl.textContent = '识别失败：' + (err.message || '请重试');
+    toast('识别失败，请检查网络后重试');
+  }
+}
+function detectSubject(text){
+  const t = text.toLowerCase();
+  const rules = [
+    { key:'shuxue', words:['口算','计算','应用题','练习册','竖式','分数','加减','乘法','除法','方程','几何','奥数','数学','算数','解方程','混合运算','脱式','进位','退位','乘法口诀','周长','面积','小数'] },
+    { key:'yuwen', words:['古诗','背诵','课文','生字','拼音','作文','阅读','听写','默写','日记','字词','词语','成语','段落','朗读','预习','语文','古诗文','诗句','看拼音','部首','组词'] },
+    { key:'yingyu', words:['unit','单词','听力','句型','letter','english','英语','朗读课文','单词表','音标','抄单词','背单词'] },
+    { key:'kexue', words:['观察','实验','记录','种植','天气','月相','科学','种子','测量','动物','植物'] }
+  ];
+  for(const r of rules){
+    if(r.words.some(w => t.includes(w.toLowerCase()))) return r.key;
+  }
+  return 'other';
+}
+function parseHomeworkText(text){
+  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+  const items = [];
+  let cur = null;
+  lines.forEach(line => {
+    const numMatch = line.match(/^[（(]?\d{1,2}[）).、:：]\s*(.*)$/);
+    const circleMatch = line.match(/^[①②③④⑤⑥⑦⑧⑨⑩]\s*(.*)$/);
+    if(numMatch){
+      const content = (numMatch[1] || '').trim();
+      if(content && !/^(\d|序号|作业|科目|备注|学生|姓名)$/.test(content)){ cur = { content }; items.push(cur); }
+      return;
+    }
+    if(circleMatch){
+      const content = (circleMatch[1] || '').trim();
+      if(content){ cur = { content }; items.push(cur); }
+      return;
+    }
+    if(/^(作业|今日作业|今天作业|作业登记|家庭作业|作业单|备注|学生|姓名|日期|科目)[\s:：]*$/.test(line) && line.length < 10) return;
+    if(cur && line.length >= 2){ cur.content += ' ' + line; }
+    else if(line.length >= 2){ cur = { content: line }; items.push(cur); }
+  });
+  items.forEach(it => it.subject = detectSubject(it.content));
+  return items.filter(it => it.content && it.content.length >= 2);
+}
+function ocrEntryHtml(it, i, subjectOpts){
+  const opts = subjectOpts.replace('value="' + it.subject + '"', 'value="' + it.subject + '" selected');
+  return '<div class="ocr-entry">' +
+    '<div class="ocr-entry-head"><span class="ocr-entry-no">作业 ' + (i + 1) + '</span><button class="ocr-entry-del" onclick="delOCREntry(' + i + ')">' + IC.trash + ' 删除</button></div>' +
+    '<div class="form-row"><label>科目</label><select onchange="setOCRDraft(' + i + ',\'subject\',this.value)">' + opts + '</select></div>' +
+    '<div class="form-row" style="margin-bottom:0"><label>作业内容</label><textarea rows="2" onchange="setOCRDraft(' + i + ',\'content\',this.value)">' + esc(it.content) + '</textarea></div>' +
+  '</div>';
+}
+function renderOCREntries(rawText){
+  const subjectOpts = SUBJECTS.map(s => '<option value="' + s.key + '">' + s.name + '</option>').join('');
+  const stuSel = ocrStudentId ? '' : '<div class="form-row"><label>保存给哪个学生</label><select id="ocr-student">' + state.students.map(s => '<option value="' + s.id + '">' + esc(s.name) + '（' + esc(s.grade + s.className) + '）</option>').join('') + '</select></div>';
+  $('#ocr-body').innerHTML =
+    '<div class="ocr-preview">' +
+      '<img src="' + ocrImageData + '" alt="作业照片">' +
+      '<div class="op-info">' +
+        '<b style="font-size:14px">✅ 识别完成</b>' +
+        '<div class="ocr-hint" style="margin-top:4px">共识别出 <b>' + ocrDraft.length + '</b> 条作业，请核对修改后保存</div>' +
+        '<button class="btn btn-ghost btn-sm" style="margin-top:8px" onclick="ocrSelectImage()">' + IC.camera + ' 重新识别</button>' +
+      '</div>' +
+    '</div>' +
+    stuSel +
+    '<div id="ocr-list">' + ocrDraft.map((it, i) => ocrEntryHtml(it, i, subjectOpts)).join('') + '</div>' +
+    '<button class="btn btn-ghost btn-block" style="margin-top:4px" onclick="addOCREntry()">' + IC.plus + ' 手动添加一条</button>' +
+    '<div class="ocr-ops"><button class="btn btn-primary" onclick="saveOCREntries()">' + IC.check + ' 一键保存全部</button></div>' +
+    (rawText ? '<details><summary style="font-size:12.5px;color:var(--ink-3);cursor:pointer;margin-top:10px">查看识别原文</summary><div class="ocr-raw">' + esc(rawText) + '</div></details>' : '');
+}
+function setOCRDraft(i, field, val){ if(ocrDraft[i]) ocrDraft[i][field] = val; }
+function addOCREntry(){ ocrDraft.push({ subject:'other', content:'' }); renderOCREntries(); }
+function delOCREntry(i){ ocrDraft.splice(i, 1); renderOCREntries(); }
+function saveOCREntries(){
+  const sid = ocrStudentId || ($('#ocr-student') ? $('#ocr-student').value : null);
+  if(!sid){ toast('请先选择学生'); return; }
+  let n = 0;
+  ocrDraft.forEach(it => {
+    const c = (it.content || '').trim();
+    if(c){
+      addHomework({ studentId:sid, subject:it.subject || 'other', content:c, assignedDate:todayKey(), dueDate:todayKey(), knowledge:'' });
+      n++;
+    }
+  });
+  if(!n){ toast('没有可保存的作业'); return; }
+  closeModal();
+  toast('已自动登记 ' + n + ' 条作业');
+  render();
+}
+$('#ocr-input').addEventListener('change', function(){
+  const f = this.files && this.files[0];
+  this.value = '';
+  if(!f) return;
+  if(!f.type.startsWith('image/')){ toast('请选择图片'); return; }
+  compressImage(f, dataUrl => {
+    ocrImageData = dataUrl;
+    showOCRPreview();
+    runOCR();
+  });
+});
 
 /* ============================================================
    视图：今日总览
