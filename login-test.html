@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>登录测试 - 云开发</title>
+  <script src="https://imgcache.qq.com/qcloud/tcbjs/1.12.0/tcb.js"></script>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif; max-width: 480px; margin: 40px auto; padding: 20px; background: #f5f7fb; }
+    h1 { text-align: center; color: #1B2430; }
+    .card { background: #fff; border-radius: 16px; padding: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.06); margin-bottom: 20px; }
+    input { width: 100%; padding: 12px; margin: 8px 0 16px; border: 1.5px solid #ddd; border-radius: 10px; font-size: 15px; box-sizing: border-box; }
+    button { width: 100%; padding: 13px; border: none; border-radius: 10px; background: #2F6BFF; color: white; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 8px; }
+    button:hover { background: #1E55E0; }
+    .secondary { background: #eef2ff; color: #2F6BFF; }
+    #userInfo, #dataList { margin-top: 16px; }
+    .item { background: #f8fafc; padding: 12px; border-radius: 10px; margin-bottom: 10px; }
+    .error { color: #e5484d; font-size: 14px; margin-top: 8px; }
+    .success { color: #18a05e; font-size: 14px; margin-top: 8px; }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+
+  <h1>云开发登录测试</h1>
+
+  <!-- 未登录时显示 -->
+  <div id="authBox" class="card">
+    <h3 id="formTitle">登录</h3>
+    <input type="text" id="username" placeholder="用户名">
+    <input type="password" id="password" placeholder="密码">
+    <button onclick="handleAuth()">确认</button>
+    <button class="secondary" onclick="toggleMode()">切换到注册</button>
+    <div id="msg"></div>
+  </div>
+
+  <!-- 登录后显示 -->
+  <div id="mainBox" class="card hidden">
+    <div id="userInfo"></div>
+    <button onclick="logout()" class="secondary">退出登录</button>
+    <h3 style="margin-top:24px;">后端数据（contents表）</h3>
+    <div id="dataList">加载中...</div>
+  </div>
+
+  <script>
+    // 初始化云开发
+    const app = tcb.init({
+      env: 'liulaoshidemo-d6g1rzl8w84b056e1'   // 你的环境ID
+    });
+    const auth = app.auth();
+    const db = app.database();
+
+    let isRegister = false;
+
+    // 检查是否已登录
+    async function checkLogin() {
+      const loginState = await auth.getLoginState();
+      if (loginState) {
+        showMain(loginState.user);
+        loadData();
+      }
+    }
+
+    function toggleMode() {
+      isRegister = !isRegister;
+      document.getElementById('formTitle').innerText = isRegister ? '注册' : '登录';
+      document.querySelector('#authBox button.secondary').innerText = isRegister ? '切换到登录' : '切换到注册';
+      document.getElementById('msg').innerText = '';
+    }
+
+    async function handleAuth() {
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value.trim();
+      const msg = document.getElementById('msg');
+
+      if (!username || !password) {
+        msg.innerHTML = '<span class="error">请输入用户名和密码</span>';
+        return;
+      }
+
+      try {
+        if (isRegister) {
+          await auth.signUp({ username, password });
+          msg.innerHTML = '<span class="success">注册成功！请登录</span>';
+          isRegister = false;
+          toggleMode();
+        } else {
+          await auth.signInWithUsernameAndPassword(username, password);
+          const loginState = await auth.getLoginState();
+          showMain(loginState.user);
+          loadData();
+        }
+      } catch (err) {
+        msg.innerHTML = `<span class="error">失败：${err.message || err}</span>`;
+        console.error(err);
+      }
+    }
+
+    function showMain(user) {
+      document.getElementById('authBox').classList.add('hidden');
+      document.getElementById('mainBox').classList.remove('hidden');
+      document.getElementById('userInfo').innerHTML = `已登录：<b>${user.username || user.uid}</b>`;
+    }
+
+    async function loadData() {
+      const list = document.getElementById('dataList');
+      try {
+        const res = await db.collection('contents').get();
+        if (res.data.length === 0) {
+          list.innerHTML = '暂无数据';
+          return;
+        }
+        list.innerHTML = res.data.map(item => `
+          <div class="item">
+            <b>${item.title || '无标题'}</b><br>
+            ${item.content || ''}
+          </div>
+        `).join('');
+      } catch (err) {
+        list.innerHTML = `<span class="error">读取失败：${err.message || err}</span>`;
+        console.error(err);
+      }
+    }
+
+    async function logout() {
+      await auth.signOut();
+      location.reload();
+    }
+
+    // 页面加载时检查登录状态
+    checkLogin();
+  </script>
+</body>
+</html>
