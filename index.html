@@ -529,6 +529,16 @@ tbody tr:hover{background:var(--surface-3)}
 .ocr-empty p{font-size:12.5px}
 .ocr-ops{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap}
 .ocr-ops .btn{flex:1;min-width:130px;justify-content:center}
+/* ============ 语音输入 ============ */
+.mic-btn{
+  display:inline-flex;align-items:center;gap:5px;font-size:12.5px;font-weight:700;
+  color:var(--primary);background:var(--primary-soft);border:1.5px solid var(--primary);
+  border-radius:20px;padding:5px 13px;cursor:pointer;transition:all .15s;line-height:1.3;
+}
+.mic-btn:hover{background:#E3EBFF}
+.mic-btn.recording{color:#fff;background:var(--danger);border-color:var(--danger);animation:mic-pulse 1.2s infinite}
+@keyframes mic-pulse{0%,100%{opacity:1}50%{opacity:.5}}
+.mic-hint-line{font-size:11.5px;color:var(--ink-3);margin-top:6px}
 </style>
 </head>
 <body>
@@ -876,7 +886,7 @@ function openModal(html){
   $('#modal-mask').classList.add('open');
   document.body.style.overflow = 'hidden';
 }
-function closeModal(){ $('#modal-mask').classList.remove('open'); document.body.style.overflow = ''; }
+function closeModal(){ if(window.stopSpeech) stopSpeech(); $('#modal-mask').classList.remove('open'); document.body.style.overflow = ''; }
 $('#modal-mask').addEventListener('click', e => { if(e.target.id === 'modal-mask') closeModal(); });
 
 /* ============================================================
@@ -894,7 +904,7 @@ function openAddHomework(studentId){
     '<form onsubmit="submitHomework(event,' + (studentId ? "'" + studentId + "'" : 'null') + ')">' +
       students +
       '<div class="form-row"><label>科目</label><select id="f-subject" required>' + subjectOpts + '</select></div>' +
-      '<div class="form-row"><label>作业内容</label><textarea id="f-content" placeholder="例如：完成数学练习册第 12 页" required></textarea></div>' +
+      '<div class="form-row"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px"><label style="margin:0">作业内容</label><button type="button" class="mic-btn" id="mic-f-content" onclick="toggleSpeech(\'f-content\')">🎤 语音输入</button></div><textarea id="f-content" placeholder="例如：完成数学练习册第 12 页" required></textarea><div class="mic-hint-line">点击麦克风，直接说话即可快速录入作业内容</div></div>' +
       '<div class="form-row"><div class="inline"><div><label>布置日期</label><input type="date" id="f-date" value="' + todayKey() + '" required></div><div><label>截止日期</label><input type="date" id="f-due" value="' + todayKey() + '"></div></div></div>' +
       '<div class="form-row"><label>涉及知识点（选填，用于 AI 分析）</label><input id="f-know" placeholder="例如：四则运算、分数加减法"></div>' +
       '<div class="form-row"><label>备注（选填）</label><input id="f-note" placeholder="例如：课堂未完成，回家补做"></div>' +
@@ -1142,7 +1152,7 @@ function ocrEntryHtml(it, i, subjectOpts){
   return '<div class="ocr-entry">' +
     '<div class="ocr-entry-head"><span class="ocr-entry-no">作业 ' + (i + 1) + '</span><button class="ocr-entry-del" onclick="delOCREntry(' + i + ')">' + IC.trash + ' 删除</button></div>' +
     '<div class="form-row"><label>科目</label><select onchange="setOCRDraft(' + i + ',\'subject\',this.value)">' + opts + '</select></div>' +
-    '<div class="form-row" style="margin-bottom:0"><label>作业内容</label><textarea rows="2" onchange="setOCRDraft(' + i + ',\'content\',this.value)">' + esc(it.content) + '</textarea></div>' +
+    '<div class="form-row" style="margin-bottom:0"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px"><label style="margin:0">作业内容</label><button type="button" class="mic-btn" id="mic-ocr-content-' + i + '" onclick="toggleSpeech(\'ocr-content-' + i + '\')">🎤 语音输入</button></div><textarea id="ocr-content-' + i + '" rows="2" onchange="setOCRDraft(' + i + ',\'content\',this.value)">' + esc(it.content) + '</textarea></div>' +
   '</div>';
 }
 function renderOCREntries(rawText){
@@ -1193,6 +1203,64 @@ $('#ocr-input').addEventListener('change', function(){
     runOCR();
   });
 });
+
+/* ============================================================
+   语音输入（Web Speech API）
+   ============================================================ */
+let speechRec = null;
+let speechActive = false;
+let speechLockId = null;
+function speechSupported(){ return !!(window.SpeechRecognition || window.webkitSpeechRecognition); }
+function toggleSpeech(inputId){
+  if(speechActive){
+    if(speechLockId === inputId){ stopSpeech(); return; }
+    stopSpeech();
+  }
+  if(!speechSupported()){ toast('当前浏览器不支持语音输入，请使用 Chrome / Edge / Safari'); return; }
+  const input = $('#' + inputId);
+  if(!input) return;
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  speechRec = new SR();
+  speechRec.lang = 'zh-CN';
+  speechRec.continuous = true;
+  speechRec.interimResults = true;
+  speechLockId = inputId;
+  let finalText = (input.value || '').trim();
+  speechRec.onresult = e => {
+    if(speechLockId !== inputId) return;
+    let interim = '';
+    for(let i = e.resultIndex; i < e.results.length; i++){
+      const r = e.results[i];
+      if(r.isFinal){
+        const seg = r[0].transcript.trim();
+        if(seg) finalText = (finalText ? finalText.replace(/[，。、；：\s]+$/, '') + '，' : '') + seg;
+      } else {
+        interim += r[0].transcript;
+      }
+    }
+    input.value = finalText + (interim ? '，' + interim : '');
+    input.focus();
+  };
+  speechRec.onerror = e => {
+    if(e.error === 'not-allowed' || e.error === 'service-not-allowed') toast('麦克风权限被拒绝，请在浏览器地址栏允许使用麦克风');
+    else if(e.error === 'network') toast('语音识别需要网络连接，请检查网络');
+    else if(e.error === 'no-speech') toast('未检测到语音，请靠近麦克风再说一遍');
+    else if(e.error !== 'aborted') toast('语音识别出错：' + e.error);
+    stopSpeech();
+  };
+  speechRec.onend = () => { if(speechActive && speechLockId === inputId){ try{ speechRec.start(); }catch(err){} } };
+  speechRec.start();
+  speechActive = true;
+  const btn = $('#mic-' + inputId);
+  if(btn){ btn.classList.add('recording'); btn.textContent = '🔴 聆听中，点击停止'; }
+  toast('正在聆听，请开始说话');
+}
+function stopSpeech(){
+  if(speechRec){ try{ speechRec.onend = null; speechRec.stop(); }catch(e){} speechRec = null; }
+  speechActive = false;
+  speechLockId = null;
+  document.querySelectorAll('.mic-btn').forEach(b => { b.classList.remove('recording'); b.textContent = '🎤 语音输入'; });
+}
 
 /* ============================================================
    视图：今日总览
